@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOY — Ingresa o Regístrate</title>
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    body { background: var(--gray-50); display: flex; flex-direction: column; min-height: 100vh; }
+
+    .auth-wrap {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--sp-6) var(--sp-4);
+    }
+
+    .auth-card {
+      background: white;
+      border-radius: var(--radius-2xl);
+      box-shadow: 0 4px 32px rgba(0,0,0,0.08);
+      width: 100%;
+      max-width: 440px;
+      overflow: hidden;
+    }
+
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-2);
+      padding: var(--sp-6) var(--sp-6) var(--sp-4);
+    }
+
+    .auth-logo-text {
+      font-size: 2rem;
+      font-weight: 900;
+      color: var(--color-primary);
+      letter-spacing: -1px;
+    }
+
+    .auth-logo-sub {
+      font-size: 0.8rem;
+      color: var(--gray-400);
+      margin-top: 2px;
+    }
+
+    .auth-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      border-bottom: 2px solid var(--gray-100);
+    }
+
+    .auth-tab {
+      padding: var(--sp-3) var(--sp-4);
+      text-align: center;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--gray-400);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      transition: color 0.2s, border-color 0.2s;
+    }
+
+    .auth-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+    }
+
+    .auth-form { padding: var(--sp-6); }
+
+    .auth-form.hidden { display: none; }
+
+    .field { margin-bottom: var(--sp-4); }
+    .field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--gray-600);
+      margin-bottom: var(--sp-1);
+    }
+    .field .input {
+      width: 100%;
+      padding: var(--sp-3) var(--sp-3);
+      border: 1.5px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+    }
+    .field .input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+    .field .input.error { border-color: var(--color-danger); }
+
+    .role-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: var(--sp-2);
+    }
+
+    .role-btn {
+      border: 2px solid var(--gray-200);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-3);
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      background: white;
+    }
+
+    .role-btn i { font-size: 1.4rem; color: var(--gray-300); display: block; margin-bottom: var(--sp-1); }
+    .role-btn span { font-size: 0.82rem; font-weight: 600; color: var(--gray-500); }
+
+    .role-btn.active {
+      border-color: var(--color-primary);
+      background: #eff6ff;
+    }
+    .role-btn.active i { color: var(--color-primary); }
+    .role-btn.active span { color: var(--color-primary); }
+
+    .auth-btn {
+      width: 100%;
+      padding: var(--sp-3);
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-lg);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+      margin-top: var(--sp-2);
+    }
+    .auth-btn:hover { background: var(--color-primary-dark, #1d4ed8); }
+    .auth-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    .auth-error {
+      background: #fef2f2;
+      border: 1px solid #fecaca;
+      color: var(--color-danger);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-3);
+      font-size: 0.85rem;
+      margin-bottom: var(--sp-4);
+      display: none;
+    }
+    .auth-error.visible { display: block; }
+
+    .auth-divider {
+      text-align: center;
+      color: var(--gray-400);
+      font-size: 0.8rem;
+      margin: var(--sp-4) 0 var(--sp-3);
+      position: relative;
+    }
+    .auth-divider::before {
+      content: '';
+      position: absolute;
+      left: 0; right: 0; top: 50%;
+      border-top: 1px solid var(--gray-200);
+    }
+    .auth-divider span { background: white; padding: 0 var(--sp-3); position: relative; }
+
+    .demo-hint {
+      background: var(--gray-50);
+      border-radius: var(--radius-lg);
+      padding: var(--sp-3);
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      text-align: center;
+      margin-top: var(--sp-4);
+    }
+    .demo-hint strong { color: var(--gray-700); }
+
+    .demo-accounts { display: flex; flex-direction: column; gap: var(--sp-1); margin-top: var(--sp-2); }
+    .demo-account {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      padding: var(--sp-2) var(--sp-3);
+      cursor: pointer;
+      transition: border-color 0.2s;
+      font-size: 0.78rem;
+    }
+    .demo-account:hover { border-color: var(--color-primary); }
+    .demo-account-label { font-weight: 600; color: var(--gray-700); }
+    .demo-account-hint { color: var(--gray-400); font-size: 0.72rem; }
+
+    .category-select { display: none; }
+    .category-select.visible { display: block; }
+
+    #workerCategoryWrap.hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrap">
+  <div class="auth-card">
+
+    <!-- Logo -->
+    <div class="auth-logo">
+      <div>
+        <div class="auth-logo-text">VOY</div>
+        <div class="auth-logo-sub">Servicios locales · Quinta Región</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="auth-tabs">
+      <div class="auth-tab active" id="tabLogin" onclick="switchTab('login')">Ingresar</div>
+      <div class="auth-tab" id="tabRegister" onclick="switchTab('register')">Registrarse</div>
+    </div>
+
+    <!-- ── Form Login ──────────────────────── -->
+    <div class="auth-form" id="formLogin">
+      <div class="auth-error" id="loginError"></div>
+
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input id="loginEmail" type="email" class="input" placeholder="tu@correo.cl" />
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input id="loginPassword" type="password" class="input" placeholder="••••••••" />
+      </div>
+
+      <button class="auth-btn" id="btnLogin" onclick="doLogin()">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> Ingresar
+      </button>
+
+      <div class="auth-divider"><span>cuentas de prueba</span></div>
+
+      <div class="demo-hint">
+        <div class="demo-accounts">
+          <div class="demo-account" onclick="fillDemo('cliente')">
+            <div>
+              <div class="demo-account-label"><i class="fa-solid fa-user" style="color:var(--color-primary)"></i> Cliente</div>
+              <div class="demo-account-hint">sofia.mendoza@gmail.com · demo1234</div>
+            </div>
+            <i class="fa-solid fa-arrow-up-right-from-square" style="color:var(--gray-300)"></i>
+          </div>
+          <div class="demo-account" onclick="fillDemo('profesional')">
+            <div>
+              <div class="demo-account-label"><i class="fa-solid fa-briefcase" style="color:var(--color-success)"></i> Profesional</div>
+              <div class="demo-account-hint">carlos.munoz@gmail.com · demo1234</div>
+            </div>
+            <i class="fa-solid fa-arrow-up-right-from-square" style="color:var(--gray-300)"></i>
+          </div>
+          <div class="demo-account" onclick="fillDemo('admin')">
+            <div>
+              <div class="demo-account-label"><i class="fa-solid fa-shield-halved" style="color:#7c3aed"></i> Admin</div>
+              <div class="demo-account-hint">admin@voy.cl · voy2026</div>
+            </div>
+            <i class="fa-solid fa-arrow-up-right-from-square" style="color:var(--gray-300)"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Form Registro ───────────────────── -->
+    <div class="auth-form hidden" id="formRegister">
+      <div class="auth-error" id="registerError"></div>
+
+      <div class="field">
+        <label>¿Cómo vas a usar VOY?</label>
+        <div class="role-selector">
+          <div class="role-btn active" id="roleCliente" onclick="selectRole('cliente')">
+            <i class="fa-solid fa-user"></i>
+            <span>Soy cliente</span>
+          </div>
+          <div class="role-btn" id="roleProfesional" onclick="selectRole('profesional')">
+            <i class="fa-solid fa-briefcase"></i>
+            <span>Soy profesional</span>
+          </div>
+        </div>
+      </div>
+      <input type="hidden" id="registerRole" value="cliente" />
+
+      <div class="field">
+        <label>Nombre completo</label>
+        <input id="registerName" type="text" class="input" placeholder="Tu nombre" />
+      </div>
+      <div class="field">
+        <label>Correo electrónico</label>
+        <input id="registerEmail" type="email" class="input" placeholder="tu@correo.cl" />
+      </div>
+      <div class="field">
+        <label>Teléfono (opcional)</label>
+        <input id="registerPhone" type="tel" class="input" placeholder="+56 9 1234 5678" />
+      </div>
+      <div class="field">
+        <label>Ciudad</label>
+        <select id="registerCity" class="input">
+          <option value="Viña del Mar">Viña del Mar</option>
+          <option value="Valparaíso">Valparaíso</option>
+          <option value="Quilpué">Quilpué</option>
+          <option value="Villa Alemana">Villa Alemana</option>
+          <option value="Concón">Concón</option>
+        </select>
+      </div>
+      <div class="field hidden" id="workerCategoryWrap">
+        <label>Categoría de servicios</label>
+        <select id="registerCategory" class="input">
+          <option value="cleaning">Limpieza del hogar</option>
+          <option value="plumbing">Gasfitería</option>
+          <option value="electrical">Electricidad</option>
+          <option value="painting">Pintura</option>
+          <option value="gardening">Jardinería</option>
+          <option value="moving">Fletes y mudanzas</option>
+          <option value="carpentry">Carpintería</option>
+          <option value="tutoring">Clases particulares</option>
+          <option value="beauty">Belleza y estética</option>
+          <option value="cooking">Cocina</option>
+          <option value="other">Otro</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Contraseña</label>
+        <input id="registerPassword" type="password" class="input" placeholder="Mínimo 6 caracteres" />
+      </div>
+      <div class="field">
+        <label>Confirmar contraseña</label>
+        <input id="registerPassword2" type="password" class="input" placeholder="Repite tu contraseña" />
+      </div>
+
+      <button class="auth-btn" id="btnRegister" onclick="doRegister()">
+        <i class="fa-solid fa-user-plus"></i> Crear cuenta
+      </button>
+    </div>
+
+  </div>
+</div>
+
+<script src="../js/config.js"></script>
+<script src="../js/airtable.js"></script>
+<script src="../js/auth.js"></script>
+<script>
+  /* Si ya hay sesión activa, redirigir */
+  (function() {
+    const s = VoyAuth.getSession();
+    if (s) {
+      const routes = { cliente: '/client/', profesional: '/worker/', admin: '/admin/' };
+      window.location.href = routes[s.role] || '/login/';
+    }
+  })();
+
+  let selectedRole = 'cliente';
+
+  function switchTab(tab) {
+    const isLogin = tab === 'login';
+    document.getElementById('tabLogin').classList.toggle('active', isLogin);
+    document.getElementById('tabRegister').classList.toggle('active', !isLogin);
+    document.getElementById('formLogin').classList.toggle('hidden', !isLogin);
+    document.getElementById('formRegister').classList.toggle('hidden', isLogin);
+  }
+
+  function selectRole(role) {
+    selectedRole = role;
+    document.getElementById('registerRole').value = role;
+    document.getElementById('roleCliente').classList.toggle('active', role === 'cliente');
+    document.getElementById('roleProfesional').classList.toggle('active', role === 'profesional');
+    document.getElementById('workerCategoryWrap').classList.toggle('hidden', role !== 'profesional');
+  }
+
+  function fillDemo(type) {
+    const accounts = {
+      cliente:     { email: 'sofia.mendoza@gmail.com',  password: 'demo1234' },
+      profesional: { email: 'carlos.munoz@gmail.com',   password: 'demo1234' },
+      admin:       { email: 'admin@voy.cl',              password: 'voy2026'  },
+    };
+    const a = accounts[type];
+    document.getElementById('loginEmail').value    = a.email;
+    document.getElementById('loginPassword').value = a.password;
+  }
+
+  function showError(formId, msg) {
+    const el = document.getElementById(formId);
+    el.textContent = msg;
+    el.classList.add('visible');
+  }
+  function hideError(formId) {
+    document.getElementById(formId).classList.remove('visible');
+  }
+
+  function setLoading(btnId, loading) {
+    const btn = document.getElementById(btnId);
+    btn.disabled = loading;
+    btn.innerHTML = loading
+      ? '<i class="fa-solid fa-spinner fa-spin"></i> Cargando...'
+      : (btnId === 'btnLogin'
+          ? '<i class="fa-solid fa-arrow-right-to-bracket"></i> Ingresar'
+          : '<i class="fa-solid fa-user-plus"></i> Crear cuenta');
+  }
+
+  async function doLogin() {
+    hideError('loginError');
+    const email    = document.getElementById('loginEmail').value.trim();
+    const password = document.getElementById('loginPassword').value;
+    if (!email || !password) { showError('loginError', 'Completa todos los campos'); return; }
+
+    setLoading('btnLogin', true);
+    try {
+      const session = await VoyAuth.login(email, password);
+      const routes  = { cliente: '/client/', profesional: '/worker/', admin: '/admin/' };
+      window.location.href = routes[session.role] || '/';
+    } catch (e) {
+      showError('loginError', e.message || 'Error al ingresar');
+      setLoading('btnLogin', false);
+    }
+  }
+
+  async function doRegister() {
+    hideError('registerError');
+    const name      = document.getElementById('registerName').value.trim();
+    const email     = document.getElementById('registerEmail').value.trim();
+    const phone     = document.getElementById('registerPhone').value.trim();
+    const city      = document.getElementById('registerCity').value;
+    const category  = document.getElementById('registerCategory').value;
+    const password  = document.getElementById('registerPassword').value;
+    const password2 = document.getElementById('registerPassword2').value;
+    const role      = selectedRole;
+
+    if (!name || !email || !password) { showError('registerError', 'Completa los campos obligatorios'); return; }
+    if (password.length < 6)          { showError('registerError', 'La contraseña debe tener mínimo 6 caracteres'); return; }
+    if (password !== password2)        { showError('registerError', 'Las contraseñas no coinciden'); return; }
+
+    setLoading('btnRegister', true);
+    try {
+      const session = await VoyAuth.register({ name, email, phone, city, category, password, role });
+      const routes  = { cliente: '/client/', profesional: '/worker/' };
+      window.location.href = routes[session.role] || '/';
+    } catch (e) {
+      showError('registerError', e.message || 'Error al crear cuenta');
+      setLoading('btnRegister', false);
+    }
+  }
+
+  /* Enter para submit */
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const loginHidden    = document.getElementById('formLogin').classList.contains('hidden');
+    const registerHidden = document.getElementById('formRegister').classList.contains('hidden');
+    if (!loginHidden)    doLogin();
+    if (!registerHidden) doRegister();
+  });
+</script>
+</body>
+</html>

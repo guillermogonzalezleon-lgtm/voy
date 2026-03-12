@@ -6,6 +6,11 @@ let adminVerifications = [];
 let adminTransactions  = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Verificar sesión — solo admins
+  const session = VoyAuth.requireRole('admin');
+  if (!session) return;
+  VoyAuth.applySessionToUI(session);
+
   showAdminLoading();
   try {
     await VOY_DATA.init();
@@ -432,4 +437,9 @@ function showView(name, el) {
   if (name === 'transacciones')  loadTransTable();
   if (name === 'categorias')     loadCategoriesAdmin();
   if (name === 'configuracion')  loadConfigView();
+}
+
+/* ── Logout ─────────────────────────────── */
+function logout() {
+  VoyAuth.logout();
 }

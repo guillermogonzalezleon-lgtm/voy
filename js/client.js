@@ -5,15 +5,25 @@
 let map, markers = [], selectedWorker = null;
 let favorites = VoyDB.getFavorites();
 let currentCategory = 'all', currentRadius = 10, listView = 'list';
+let clientSession = null;
+let clientData    = null;
 
 /* ── Init ───────────────────────────────── */
 document.addEventListener('DOMContentLoaded', async () => {
+  // Verificar sesión — redirige a /login/ si no hay sesión de cliente
+  clientSession = VoyAuth.requireRole('cliente');
+  if (!clientSession) return;
+
   buildCategoryChips();
   initMap();
   showLoadingState();
 
   try {
     await VOY_DATA.init();
+    // Cargar datos del cliente logueado
+    clientData = await VoyDB.getClientByEmail(clientSession.email);
+    // Mostrar info de sesión en topbar
+    VoyAuth.applySessionToUI(clientSession);
     filterWorkers();
     loadActiveServices();
     loadHistorial();
@@ -28,6 +38,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     console.error(e);
   }
 });
+
+/* ── Logout ─────────────────────────────── */
+function logout() {
+  VoyAuth.logout();
+}
 
 function showLoadingState() {
   VOY.showLoading('providersList', 'Cargando profesionales...');
@@ -398,7 +413,7 @@ async function confirmBooking() {
 
   try {
     await VoyDB.createBooking({
-      clientId:   101,
+      clientId:   clientData?.id || clientSession?.id || 101,
       workerId:   selectedWorker.id,
       category:   selectedWorker.category,
       service,
@@ -410,8 +425,8 @@ async function confirmBooking() {
 
     // Crear también la solicitud en la tabla Requests para el worker
     await VoyDB.createRequest({
-      clientName:     VOY_DATA.clients[0]?.name || 'Cliente',
-      clientAvatar:   VOY_DATA.clients[0]?.avatar || '',
+      clientName:     clientData?.name || clientSession?.name || 'Cliente',
+      clientAvatar:   clientData?.avatar || clientSession?.avatar || '',
       clientRating:   5,
       service,
       date,
@@ -626,7 +641,7 @@ async function submitRating() {
 function loadClientProfile() {
   const el = document.getElementById('clientProfile');
   if (!el) return;
-  const client = VOY_DATA.clients[0];
+  const client = clientData || VOY_DATA.clients[0];
   if (!client) return;
   el.innerHTML = `
     <div style="display:grid; grid-template-columns:300px 1fr; gap:var(--sp-6);">

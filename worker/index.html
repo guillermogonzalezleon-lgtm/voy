@@ -66,13 +66,16 @@
     <button class="topbar-btn hide-mobile" onclick="VOY.showToast('Chat próximamente', 'info')">
       <i class="fa-solid fa-comment-dots"></i>
     </button>
-    <div class="topbar-avatar">
-      <img src="https://i.pravatar.cc/40?img=11" alt="Carlos" class="avatar avatar-sm" />
+    <div class="topbar-avatar" style="cursor:pointer;" onclick="showView('perfil', null)">
+      <img src="https://i.pravatar.cc/40?img=11" alt="Perfil" class="avatar avatar-sm session-avatar" />
       <div class="topbar-avatar-info hide-mobile">
-        <span class="topbar-avatar-name">Carlos Muñoz</span>
-        <span class="topbar-avatar-sub">Gasfitería</span>
+        <span class="topbar-avatar-name session-name">Cargando...</span>
+        <span class="topbar-avatar-sub session-email" style="font-size:0.72rem;color:var(--gray-400);"></span>
       </div>
     </div>
+    <button class="topbar-btn" onclick="logout()" title="Cerrar sesión" style="color:var(--gray-400);">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
   </div>
 </div>
 
@@ -109,6 +112,9 @@
     <div class="sidebar-footer">
       <a href="../index.html" class="sidebar-link" style="color:var(--gray-400);">
         <i class="fa-solid fa-arrow-left"></i> Volver al inicio
+      </a>
+      <a class="sidebar-link" style="color:var(--color-danger);" onclick="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
       </a>
     </div>
   </aside>
@@ -342,6 +348,7 @@
 <div id="toast-container"></div>
 <script src="../js/config.js"></script>
 <script src="../js/airtable.js"></script>
+<script src="../js/auth.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/worker.js"></script>
 </body>

@@ -63,6 +63,7 @@ const VoyDB = (() => {
       gallery:      f.Gallery      ? f.Gallery.split(',').map(s => s.trim()).filter(Boolean) : [],
       phone:        f.Phone        || '',
       email:        f.Email        || '',
+      passwordHash: f.PasswordHash || '',
     };
   }
 
@@ -80,6 +81,7 @@ const VoyDB = (() => {
       lng:          f.Lng           || 0,
       phone:        f.Phone         || '',
       email:        f.Email         || '',
+      passwordHash: f.PasswordHash  || '',
     };
   }
 
@@ -160,6 +162,75 @@ const VoyDB = (() => {
       text:           f.Text           || '',
       time:           f.TimeStr        || '',
     };
+  }
+
+  /* ── Auth ───────────────────────────────── */
+  async function getWorkerByEmail(email) {
+    const formula = `LOWER({Email})="${email.toLowerCase()}"`;
+    const records = await listAll('Workers', `filterByFormula=${encodeURIComponent(formula)}`);
+    return records.length ? mapWorker(records[0]) : null;
+  }
+
+  async function getClientByEmail(email) {
+    const formula = `LOWER({Email})="${email.toLowerCase()}"`;
+    const records = await listAll('Clients', `filterByFormula=${encodeURIComponent(formula)}`);
+    return records.length ? mapClient(records[0]) : null;
+  }
+
+  async function createWorkerAccount(data) {
+    const nextId = Date.now() % 100000;
+    const rec = await request('Workers', {
+      method: 'POST',
+      body: JSON.stringify({
+        fields: {
+          WorkerId:     nextId,
+          Name:         data.name,
+          Email:        data.email,
+          PasswordHash: data.passwordHash,
+          Phone:        data.phone        || '',
+          City:         data.city         || 'Viña del Mar',
+          Category:     data.category     || 'other',
+          Available:    false,
+          Verified:     false,
+          Rating:       0,
+          Reviews:      0,
+          CompletedJobs:0,
+          PriceMin:     0,
+          PriceMax:     0,
+          Bio:          '',
+          Avatar:       `https://i.pravatar.cc/80?u=${data.email}`,
+        },
+      }),
+    });
+    return mapWorker(rec);
+  }
+
+  async function createClientAccount(data) {
+    const nextId = Date.now() % 100000;
+    const rec = await request('Clients', {
+      method: 'POST',
+      body: JSON.stringify({
+        fields: {
+          ClientId:     nextId,
+          Name:         data.name,
+          Email:        data.email,
+          PasswordHash: data.passwordHash,
+          Phone:        data.phone        || '',
+          City:         data.city         || 'Viña del Mar',
+          TotalServices:0,
+          MemberSince:  new Date().toLocaleDateString('es-CL'),
+          Avatar:       `https://i.pravatar.cc/80?u=${data.email}`,
+        },
+      }),
+    });
+    return mapClient(rec);
+  }
+
+  async function updatePasswordHash(table, recordId, hash) {
+    return request(`${table}/${recordId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { PasswordHash: hash } }),
+    });
   }
 
   /* ── Workers ─────────────────────────────── */
@@ -426,15 +497,27 @@ const VoyDB = (() => {
 
   /* ── Exports públicos ────────────────────── */
   return {
+    // Auth
+    getWorkerByEmail, getClientByEmail,
+    createWorkerAccount, createClientAccount, updatePasswordHash,
+    // Workers
     getWorkers, getWorkerByRecordId, updateWorker,
     updateWorkerAvailability, saveWorkerProfile,
+    // Clients
     getClients, saveClientProfile,
+    // Bookings
     getBookings, createBooking, updateBookingStatus, addBookingReview,
+    // Requests
     getRequests, createRequest, updateRequest, updateRequestStatus,
+    // Verifications
     getVerifications, updateVerification,
+    // Transactions
     getTransactions, createTransaction,
+    // Messages
     getMessages, sendMessage,
+    // Stats
     getStats,
+    // Favoritos
     getFavorites, saveFavorites, toggleFavoriteLocal,
   };
 })();

@@ -2,14 +2,23 @@
    VOY — Worker App Logic (Airtable conectado)
    ============================================ */
 
-let workerData = null;         // El profesional logueado (workers[0] por ahora)
-let workerRequests = [];       // Solicitudes cargadas desde Airtable
+let workerData = null;
+let workerSession = null;
+let workerRequests = [];
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // Verificar sesión — redirige a /login/ si no hay sesión de profesional
+  workerSession = VoyAuth.requireRole('profesional');
+  if (!workerSession) return;
+
   showWorkerLoading();
   try {
     await VOY_DATA.init();
-    workerData = VOY_DATA.workers[0]; // Simula sesión como Carlos Muñoz (worker 1)
+    // Cargar datos del profesional logueado desde Airtable
+    workerData = await VoyDB.getWorkerByRecordId(workerSession.recordId);
+    if (!workerData) throw new Error('No se encontraron datos del profesional');
+    // Mostrar info de sesión en la UI
+    VoyAuth.applySessionToUI(workerSession);
     workerRequests = await VoyDB.getRequests(workerData?._recordId);
 
     buildEarningsChart();
@@ -728,3 +737,8 @@ function showView(name, el) {
 document.querySelectorAll('.modal-overlay').forEach(overlay => {
   overlay.addEventListener('click', e => { if (e.target === overlay) VOY.closeModal(overlay.id); });
 });
+
+/* ── Logout ─────────────────────────────── */
+function logout() {
+  VoyAuth.logout();
+}

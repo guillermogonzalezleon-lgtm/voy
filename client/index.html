@@ -85,13 +85,16 @@
     <button class="topbar-btn hide-mobile" title="Mensajes" onclick="toggleChat()">
       <i class="fa-solid fa-comment-dots"></i>
     </button>
-    <div class="topbar-avatar" onclick="window.location.href='profile.html'">
-      <img src="https://i.pravatar.cc/40?img=2" alt="Sofía" class="avatar avatar-sm" />
+    <div class="topbar-avatar" style="cursor:pointer;" onclick="showView('perfil', null)">
+      <img src="https://i.pravatar.cc/40?img=2" alt="Perfil" class="avatar avatar-sm session-avatar" />
       <div class="topbar-avatar-info hide-mobile">
-        <span class="topbar-avatar-name">Sofía Mendoza</span>
-        <span class="topbar-avatar-sub">Viña del Mar</span>
+        <span class="topbar-avatar-name session-name">Cargando...</span>
+        <span class="topbar-avatar-sub session-email" style="font-size:0.72rem;color:var(--gray-400);"></span>
       </div>
     </div>
+    <button class="topbar-btn" onclick="logout()" title="Cerrar sesión" style="color:var(--gray-400);">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
   </div>
 </div>
 
@@ -125,8 +128,11 @@
       </a>
     </nav>
     <div class="sidebar-footer">
-      <a href="../index.html" class="sidebar-link" style="color: var(--gray-400);">
+      <a href="../index.html" class="sidebar-link" style="color:var(--gray-400);">
         <i class="fa-solid fa-arrow-left"></i> Volver al inicio
+      </a>
+      <a class="sidebar-link" style="color:var(--color-danger);" onclick="logout()">
+        <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
       </a>
     </div>
   </aside>
@@ -379,6 +385,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="../js/config.js"></script>
 <script src="../js/airtable.js"></script>
+<script src="../js/auth.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/client.js"></script>
 </body>
