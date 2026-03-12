@@ -107,6 +107,96 @@ function setCategory(catId, el) {
   filterWorkers();
 }
 
+/* ── Autocomplete search ───────────────── */
+let activeSuggestion = -1;
+
+function onSearchInput() {
+  const input = document.getElementById('mainSearch');
+  const query = input.value.toLowerCase().trim();
+  const box = document.getElementById('searchSuggestions');
+
+  if (!query) { box.classList.remove('open'); filterWorkers(); return; }
+
+  const suggestions = [];
+
+  // Buscar categorías que coincidan
+  VOY_DATA.categories.forEach(cat => {
+    if (cat.label.toLowerCase().includes(query)) {
+      suggestions.push({ type: 'category', label: cat.label, icon: cat.icon, id: cat.id });
+    }
+  });
+
+  // Buscar profesionales que coincidan
+  VOY_DATA.workers.forEach(w => {
+    if (w.name.toLowerCase().includes(query) || (w.categoryLabel && w.categoryLabel.toLowerCase().includes(query))) {
+      suggestions.push({ type: 'worker', label: w.name, sublabel: w.categoryLabel, icon: 'fa-user', id: w.id });
+    }
+  });
+
+  if (suggestions.length === 0) { box.classList.remove('open'); filterWorkers(); return; }
+
+  // Renderizar sugerencias agrupadas
+  let html = '';
+  const cats = suggestions.filter(s => s.type === 'category');
+  const workers = suggestions.filter(s => s.type === 'worker').slice(0, 5);
+
+  if (cats.length) {
+    html += '<div class="suggestion-section">Categorías</div>';
+    cats.forEach(s => {
+      html += `<div class="suggestion-item" onclick="selectSuggestion('category','${s.id}','${s.label}')">
+        <i class="fa-solid ${s.icon}"></i>
+        <span>${highlightMatch(s.label, query)}</span>
+      </div>`;
+    });
+  }
+  if (workers.length) {
+    html += '<div class="suggestion-section">Profesionales</div>';
+    workers.forEach(s => {
+      html += `<div class="suggestion-item" onclick="selectSuggestion('worker',${s.id},'${s.label}')">
+        <i class="fa-solid ${s.icon}"></i>
+        <div><span>${highlightMatch(s.label, query)}</span>
+        <div style="font-size:0.7rem;color:var(--gray-400);">${s.sublabel || ''}</div></div>
+      </div>`;
+    });
+  }
+
+  box.innerHTML = html;
+  box.classList.add('open');
+  activeSuggestion = -1;
+  filterWorkers();
+}
+
+function highlightMatch(text, query) {
+  const idx = text.toLowerCase().indexOf(query);
+  if (idx === -1) return text;
+  return text.slice(0, idx) + '<span class="match">' + text.slice(idx, idx + query.length) + '</span>' + text.slice(idx + query.length);
+}
+
+function selectSuggestion(type, id, label) {
+  const input = document.getElementById('mainSearch');
+  const box = document.getElementById('searchSuggestions');
+  box.classList.remove('open');
+
+  if (type === 'category') {
+    input.value = '';
+    const chip = document.querySelector(`.cat-chip[data-cat="${id}"]`);
+    if (chip) setCategory(id, chip);
+  } else {
+    input.value = label;
+    filterWorkers();
+    openWorkerDetail(id);
+  }
+}
+
+// Cerrar sugerencias al hacer click fuera
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('searchSuggestions');
+  const input = document.getElementById('mainSearch');
+  if (box && !box.contains(e.target) && e.target !== input) {
+    box.classList.remove('open');
+  }
+});
+
 /* ── Filter & sort ──────────────────────── */
 function updateRadius(val) {
   currentRadius = parseInt(val);
