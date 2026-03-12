@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOY — Panel Admin</title>
+  <link rel="stylesheet" href="../css/variables.css" />
+  <link rel="stylesheet" href="../css/main.css" />
+  <link rel="stylesheet" href="../css/app.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <style>
+    .admin-chart { display:flex; align-items:flex-end; gap:var(--sp-2); height:100px; }
+    .admin-bar-wrap { display:flex; flex-direction:column; align-items:center; gap:4px; flex:1; }
+    .admin-bar { width:100%; border-radius:4px 4px 0 0; background:var(--blue-200); transition:0.3s; cursor:pointer; }
+    .admin-bar:hover { background:var(--color-primary); }
+    .admin-bar.highlight { background:var(--color-primary); }
+    .admin-bar-label { font-size:9px; color:var(--gray-400); }
+    .approval-card { background:white; border:1.5px solid var(--gray-200); border-radius:var(--radius-xl); padding:var(--sp-4); margin-bottom:var(--sp-3); }
+    .approval-card.new { border-color:var(--color-warning); background:#fffbeb; }
+  </style>
+</head>
+<body>
+
+<!-- ── Top bar ─────────────────────────────── -->
+<div class="app-topbar">
+  <div class="topbar-brand">
+    <a href="../index.html" class="topbar-logo">VOY</a>
+    <span class="topbar-role admin">Admin</span>
+  </div>
+  <div class="topbar-center hide-mobile">
+    <div class="topbar-search">
+      <i class="fa-solid fa-magnifying-glass"></i>
+      <input type="text" placeholder="Buscar usuario, transacción..." />
+    </div>
+  </div>
+  <div class="topbar-actions">
+    <button class="topbar-btn" onclick="VOY.showToast('2 verificaciones pendientes', 'warning')">
+      <i class="fa-solid fa-bell"></i>
+      <span class="notif-dot"></span>
+    </button>
+    <div class="topbar-avatar">
+      <img src="https://i.pravatar.cc/40?img=60" class="avatar avatar-sm" />
+      <div class="topbar-avatar-info hide-mobile">
+        <span class="topbar-avatar-name">Admin VOY</span>
+        <span class="topbar-avatar-sub">Super Admin</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="app-body">
+  <!-- ── Sidebar ──────────────────────────── -->
+  <aside class="sidebar">
+    <nav class="sidebar-nav">
+      <span class="sidebar-section-label">Panel</span>
+      <a class="sidebar-link active" onclick="showView('overview', this)">
+        <i class="fa-solid fa-chart-pie"></i> Resumen
+      </a>
+      <a class="sidebar-link" onclick="showView('verificaciones', this)">
+        <i class="fa-solid fa-shield-halved"></i> Verificaciones
+        <span class="sidebar-badge">12</span>
+      </a>
+      <a class="sidebar-link" onclick="showView('usuarios', this)">
+        <i class="fa-solid fa-users"></i> Usuarios
+      </a>
+      <a class="sidebar-link" onclick="showView('transacciones', this)">
+        <i class="fa-solid fa-receipt"></i> Transacciones
+      </a>
+      <a class="sidebar-link" onclick="showView('categorias', this)">
+        <i class="fa-solid fa-tags"></i> Categorías
+      </a>
+      <span class="sidebar-section-label">Sistema</span>
+      <a class="sidebar-link" onclick="showView('configuracion', this)">
+        <i class="fa-solid fa-gear"></i> Configuración
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <a href="../index.html" class="sidebar-link" style="color:var(--gray-400);">
+        <i class="fa-solid fa-arrow-left"></i> Volver al inicio
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── Main ─────────────────────────────── -->
+  <main class="app-main">
+
+    <!-- ── Overview ─────────────────────── -->
+    <div id="view-overview" class="app-main-inner">
+      <div class="page-header">
+        <h1 class="page-title">Panel de administración</h1>
+        <p class="page-subtitle">Quinta Región Beta · Marzo 2026</p>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#dbeafe;color:var(--color-primary);"><i class="fa-solid fa-users"></i></div>
+          <div class="stat-card-info">
+            <div class="stat-card-value">3.789</div>
+            <div class="stat-card-label">Usuarios totales</div>
+            <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +127 este mes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#d1fae5;color:var(--color-success);"><i class="fa-solid fa-briefcase"></i></div>
+          <div class="stat-card-info">
+            <div class="stat-card-value">548</div>
+            <div class="stat-card-label">Profesionales activos</div>
+            <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +34 este mes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#fef3c7;color:var(--color-warning);"><i class="fa-solid fa-handshake"></i></div>
+          <div class="stat-card-info">
+            <div class="stat-card-value">12.890</div>
+            <div class="stat-card-label">Servicios completados</div>
+            <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +823 este mes</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa-solid fa-sack-dollar"></i></div>
+          <div class="stat-card-info">
+            <div class="stat-card-value">$89,4M</div>
+            <div class="stat-card-label">Volumen transaccional</div>
+            <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +22% vs mes anterior</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts row -->
+      <div style="display:grid; grid-template-columns:2fr 1fr; gap:var(--sp-5); margin-bottom:var(--sp-5);">
+        <div class="card">
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <strong>Servicios por mes (2026)</strong>
+            <span class="badge badge-green">+22% YTD</span>
+          </div>
+          <div class="card-body">
+            <div class="admin-chart" id="adminChart"></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><strong>Servicios por categoría</strong></div>
+          <div class="card-body" id="categoryBreakdown"></div>
+        </div>
+      </div>
+
+      <!-- Recent actions -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-5);">
+        <div class="card">
+          <div class="card-header" style="display:flex;align-items:center;justify-content:space-between;">
+            <strong>Verificaciones pendientes</strong>
+            <button class="btn btn-primary btn-sm" onclick="showView('verificaciones', null)">Ver todas</button>
+          </div>
+          <div class="card-body" id="pendingVerifPreview"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><strong>Últimas transacciones</strong></div>
+          <div class="card-body" style="padding:0;" id="recentTransactions"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Verificaciones ─────────────── -->
+    <div id="view-verificaciones" class="app-main-inner hidden">
+      <div class="page-header">
+        <h1 class="page-title">Verificaciones pendientes</h1>
+        <p class="page-subtitle">Revisa y aprueba o rechaza los documentos de los profesionales</p>
+      </div>
+      <div id="verificationsList"></div>
+    </div>
+
+    <!-- ── Usuarios ───────────────────── -->
+    <div id="view-usuarios" class="app-main-inner hidden">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><h1 class="page-title">Usuarios</h1><p class="page-subtitle">Gestión de clientes y profesionales</p></div>
+        <div style="display:flex;gap:var(--sp-3);">
+          <select class="input" style="min-width:140px;" onchange="filterUsers(this.value)">
+            <option value="all">Todos</option>
+            <option value="cliente">Clientes</option>
+            <option value="profesional">Profesionales</option>
+          </select>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <table class="data-table" id="usersTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Transacciones ─────────────── -->
+    <div id="view-transacciones" class="app-main-inner hidden">
+      <div class="page-header">
+        <h1 class="page-title">Transacciones</h1>
+        <p class="page-subtitle">Historial completo de pagos</p>
+      </div>
+      <div class="stats-grid" style="margin-bottom:var(--sp-5);">
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#d1fae5;color:var(--color-success);"><i class="fa-solid fa-circle-check"></i></div>
+          <div class="stat-card-info"><div class="stat-card-value">$13,4M</div><div class="stat-card-label">Este mes</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#dbeafe;color:var(--color-primary);"><i class="fa-solid fa-percent"></i></div>
+          <div class="stat-card-info"><div class="stat-card-value">$2,01M</div><div class="stat-card-label">Comisiones VOY (15%)</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#fef3c7;color:var(--color-warning);"><i class="fa-solid fa-clock"></i></div>
+          <div class="stat-card-info"><div class="stat-card-value">$450.000</div><div class="stat-card-label">Pendientes de pago</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-card-icon" style="background:#fee2e2;color:var(--color-danger);"><i class="fa-solid fa-rotate-left"></i></div>
+          <div class="stat-card-info"><div class="stat-card-value">3</div><div class="stat-card-label">Devoluciones</div></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-body" style="padding:0;">
+          <table class="data-table" id="transTable"></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Categorías ─────────────────── -->
+    <div id="view-categorias" class="app-main-inner hidden">
+      <div class="page-header" style="display:flex;align-items:center;justify-content:space-between;">
+        <div><h1 class="page-title">Categorías de servicios</h1></div>
+        <button class="btn btn-primary" onclick="VOY.showToast('Agregar categoría próximamente', 'info')">
+          <i class="fa-solid fa-plus"></i> Nueva categoría
+        </button>
+      </div>
+      <div id="categoriesAdmin"></div>
+    </div>
+
+    <!-- ── Configuración ─────────────── -->
+    <div id="view-configuracion" class="app-main-inner hidden">
+      <div class="page-header"><h1 class="page-title">Configuración</h1></div>
+      <div id="configView"></div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast-container"></div>
+<script src="../js/data.js"></script>
+<script src="../js/admin.js"></script>
+</body>
+</html>

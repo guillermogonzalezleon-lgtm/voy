@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VOY — Servicios a un VOY de distancia</title>
+  <meta name="description" content="Encuentra profesionales verificados cerca de ti en la Quinta Región. Gasfitería, electricidad, belleza, mecánica y más." />
+  <link rel="stylesheet" href="css/variables.css" />
+  <link rel="stylesheet" href="css/main.css" />
+  <link rel="stylesheet" href="css/landing.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+</head>
+<body>
+
+<!-- ── Navbar ──────────────────────────────── -->
+<nav class="navbar" id="navbar">
+  <div class="container navbar-inner">
+    <a href="/" class="brand">
+      <div class="brand-logo">VOY</div>
+      <span class="brand-tagline">Quinta Región</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="#categorias">Servicios</a></li>
+      <li><a href="#profesionales">Profesionales</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="worker/index.html" class="btn btn-ghost hide-mobile">Ofrecer servicio</a>
+      <a href="client/index.html" class="btn btn-primary">
+        <i class="fa-solid fa-magnifying-glass"></i> Buscar servicio
+      </a>
+    </div>
+    <button class="nav-burger" id="navBurger" aria-label="Menú">
+      <i class="fa-solid fa-bars"></i>
+    </button>
+  </div>
+  <!-- Mobile menu -->
+  <div class="nav-mobile" id="navMobile">
+    <a href="#como-funciona" onclick="closeMobileMenu()">Cómo funciona</a>
+    <a href="#categorias" onclick="closeMobileMenu()">Servicios</a>
+    <a href="worker/index.html">Ofrecer servicio</a>
+    <a href="client/index.html" class="btn btn-primary btn-block">Buscar servicio</a>
+  </div>
+</nav>
+
+<!-- ── Hero ────────────────────────────────── -->
+<section class="hero">
+  <div class="hero-bg">
+    <div class="hero-blob hero-blob-1"></div>
+    <div class="hero-blob hero-blob-2"></div>
+    <div class="hero-blob hero-blob-3"></div>
+    <div class="hero-grid"></div>
+  </div>
+  <div class="container hero-content">
+    <div class="hero-text">
+      <span class="hero-pill">
+        <span class="hero-pill-dot"></span>
+        Beta disponible en Quinta Región
+      </span>
+      <h1 class="hero-title">
+        Servicios a un <span class="hero-title-accent">VOY</span><br />de distancia
+      </h1>
+      <p class="hero-subtitle">
+        Conecta con los mejores profesionales verificados de tu ciudad.<br />
+        Gasfitería, electricidad, belleza, mecánica y más — cerca de ti, ahora.
+      </p>
+      <!-- Search bar -->
+      <div class="hero-search">
+        <div class="hero-search-input">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" placeholder="¿Qué servicio necesitas?" id="heroSearch" />
+        </div>
+        <div class="hero-search-location">
+          <i class="fa-solid fa-location-dot"></i>
+          <input type="text" placeholder="Tu ubicación" value="Viña del Mar" id="heroLocation" />
+        </div>
+        <button class="btn btn-primary btn-lg" onclick="heroSearch()">
+          <i class="fa-solid fa-arrow-right"></i> Buscar
+        </button>
+      </div>
+      <!-- Quick categories -->
+      <div class="hero-quick">
+        <span class="hero-quick-label">Populares:</span>
+        <a href="client/index.html?cat=gasfiteria" class="hero-quick-tag">Gasfitería</a>
+        <a href="client/index.html?cat=electricidad" class="hero-quick-tag">Electricidad</a>
+        <a href="client/index.html?cat=belleza" class="hero-quick-tag">Belleza</a>
+        <a href="client/index.html?cat=limpieza" class="hero-quick-tag">Limpieza</a>
+      </div>
+    </div>
+    <!-- Hero visual -->
+    <div class="hero-visual">
+      <div class="hero-card hero-card-main">
+        <div class="hero-card-header">
+          <img src="https://i.pravatar.cc/64?img=11" alt="Carlos" class="avatar avatar-md" />
+          <div>
+            <div class="hero-card-name">Carlos Muñoz</div>
+            <div class="hero-card-job">Gasfiter · 1.2 km</div>
+          </div>
+          <span class="badge badge-green">Disponible</span>
+        </div>
+        <div class="hero-card-stars">★★★★★ <span>4.9 · 187 reseñas</span></div>
+        <div class="hero-card-price">Desde $20.000</div>
+      </div>
+      <div class="hero-card hero-card-secondary">
+        <i class="fa-solid fa-check-circle"></i>
+        <span>¡Solicitud enviada!</span>
+      </div>
+      <div class="hero-card hero-card-tertiary">
+        <div class="hero-card-avatar-stack">
+          <img src="https://i.pravatar.cc/40?img=5" alt="" class="avatar avatar-sm" />
+          <img src="https://i.pravatar.cc/40?img=15" alt="" class="avatar avatar-sm" />
+          <img src="https://i.pravatar.cc/40?img=20" alt="" class="avatar avatar-sm" />
+        </div>
+        <div>
+          <strong>+548 profesionales</strong>
+          <div class="text-sm text-muted">activos en la región</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- Stats bar -->
+  <div class="hero-stats">
+    <div class="container hero-stats-inner">
+      <div class="hero-stat"><strong>548+</strong><span>Profesionales</span></div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat"><strong>12.890</strong><span>Servicios completados</span></div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat"><strong>4.8 ★</strong><span>Calificación promedio</span></div>
+      <div class="hero-stat-divider"></div>
+      <div class="hero-stat"><strong>3.241</strong><span>Clientes activos</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Cómo funciona ────────────────────────── -->
+<section class="section" id="como-funciona">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Simple y rápido</span>
+      <h2 class="section-title">¿Cómo funciona VOY?</h2>
+      <p class="section-subtitle">En menos de 5 minutos tienes a un profesional de camino a tu casa.</p>
+    </div>
+    <!-- Tabs cliente / trabajador -->
+    <div class="how-tabs">
+      <button class="how-tab active" onclick="switchTab('cliente', this)">
+        <i class="fa-solid fa-user"></i> Soy Cliente
+      </button>
+      <button class="how-tab" onclick="switchTab('trabajador', this)">
+        <i class="fa-solid fa-briefcase"></i> Soy Profesional
+      </button>
+    </div>
+    <!-- Steps cliente -->
+    <div class="how-steps" id="tab-cliente">
+      <div class="how-step">
+        <div class="how-step-icon" style="background: var(--blue-100); color: var(--blue-600);">
+          <i class="fa-solid fa-magnifying-glass"></i>
+        </div>
+        <div class="how-step-num">01</div>
+        <h3>Busca el servicio</h3>
+        <p>Elige la categoría que necesitas y ajusta el radio de búsqueda en tu zona.</p>
+      </div>
+      <div class="how-step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-step-icon" style="background: #EDE9FE; color: #7C3AED;">
+          <i class="fa-solid fa-star"></i>
+        </div>
+        <div class="how-step-num">02</div>
+        <h3>Elige tu profesional</h3>
+        <p>Revisa perfiles, reseñas y precios. Contacta directamente por el chat de VOY.</p>
+      </div>
+      <div class="how-step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-step-icon" style="background: #D1FAE5; color: #059669;">
+          <i class="fa-solid fa-calendar-check"></i>
+        </div>
+        <div class="how-step-num">03</div>
+        <h3>Agenda y paga seguro</h3>
+        <p>Reserva en el horario que quieras y paga de forma segura dentro de la app.</p>
+      </div>
+    </div>
+    <!-- Steps trabajador -->
+    <div class="how-steps hidden" id="tab-trabajador">
+      <div class="how-step">
+        <div class="how-step-icon" style="background: var(--blue-100); color: var(--blue-600);">
+          <i class="fa-solid fa-user-plus"></i>
+        </div>
+        <div class="how-step-num">01</div>
+        <h3>Crea tu perfil</h3>
+        <p>Regístrate con Google, sube tu documentación y configura tus servicios y tarifas.</p>
+      </div>
+      <div class="how-step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-step-icon" style="background: #FEF3C7; color: #D97706;">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+        <div class="how-step-num">02</div>
+        <h3>Recibe solicitudes</h3>
+        <p>Clientes cercanos te contactarán. Acepta o rechaza según tu disponibilidad.</p>
+      </div>
+      <div class="how-step-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+      <div class="how-step">
+        <div class="how-step-icon" style="background: #D1FAE5; color: #059669;">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <div class="how-step-num">03</div>
+        <h3>Cobra sin complicaciones</h3>
+        <p>Recibe el pago directo en tu cuenta. VOY cobra solo el 15% por servicio completado.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Categorías ───────────────────────────── -->
+<section class="section section-gray" id="categorias">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Todo en un lugar</span>
+      <h2 class="section-title">¿Qué necesitas hoy?</h2>
+      <p class="section-subtitle">Explora todas las categorías de servicios disponibles en tu área.</p>
+    </div>
+    <div class="categories-grid" id="categoriesGrid"></div>
+  </div>
+</section>
+
+<!-- ── Profesionales destacados ─────────────── -->
+<section class="section" id="profesionales">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Mejor valorados</span>
+      <h2 class="section-title">Profesionales destacados</h2>
+      <p class="section-subtitle">Los profesionales con mejor calificación en la Quinta Región.</p>
+    </div>
+    <div class="workers-grid" id="workersGrid"></div>
+    <div style="text-align: center; margin-top: var(--sp-10);">
+      <a href="client/index.html" class="btn btn-primary btn-lg">
+        Ver todos los profesionales <i class="fa-solid fa-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- ── Dos perfiles ─────────────────────────── -->
+<section class="section section-dark">
+  <div class="container">
+    <div class="profiles-grid">
+      <div class="profile-card profile-card-client">
+        <div class="profile-card-icon"><i class="fa-solid fa-magnifying-glass"></i></div>
+        <h3>Soy Cliente</h3>
+        <p>Encuentra el profesional ideal cerca de ti. Compara precios, lee reseñas reales y agenda cuando quieras.</p>
+        <ul class="profile-features">
+          <li><i class="fa-solid fa-check"></i> Búsqueda por radio en km</li>
+          <li><i class="fa-solid fa-check"></i> Perfiles verificados</li>
+          <li><i class="fa-solid fa-check"></i> Chat directo</li>
+          <li><i class="fa-solid fa-check"></i> Pago seguro</li>
+          <li><i class="fa-solid fa-check"></i> Califica el servicio</li>
+        </ul>
+        <a href="client/index.html" class="btn btn-white btn-lg btn-block">
+          Buscar ahora <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+      <div class="profile-card profile-card-worker">
+        <div class="profile-card-icon"><i class="fa-solid fa-briefcase"></i></div>
+        <h3>Soy Profesional</h3>
+        <p>Accede a cientos de clientes en tu zona. Trabaja a tu ritmo, gestiona tu agenda y cobra sin intermediarios.</p>
+        <ul class="profile-features">
+          <li><i class="fa-solid fa-check"></i> Perfil profesional verificado</li>
+          <li><i class="fa-solid fa-check"></i> Recibe solicitudes cercanas</li>
+          <li><i class="fa-solid fa-check"></i> Gestiona tu agenda</li>
+          <li><i class="fa-solid fa-check"></i> Solo 15% de comisión</li>
+          <li><i class="fa-solid fa-check"></i> Pago directo a tu cuenta</li>
+        </ul>
+        <a href="worker/index.html" class="btn btn-outline btn-lg btn-block" style="color: white; border-color: white;">
+          Registrarme <i class="fa-solid fa-arrow-right"></i>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Testimonios ──────────────────────────── -->
+<section class="section section-gray" id="testimonios">
+  <div class="container">
+    <div class="section-header">
+      <span class="section-badge">Lo que dicen</span>
+      <h2 class="section-title">Clientes que confían en VOY</h2>
+    </div>
+    <div class="testimonials-grid">
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"Encontré un gasfiter en menos de 10 minutos. Llegó puntual, resolvió la filtración y cobró lo acordado. La app es muy fácil de usar."</p>
+        <div class="testimonial-author">
+          <img src="https://i.pravatar.cc/48?img=2" alt="Sofía" class="avatar avatar-sm" />
+          <div>
+            <strong>Sofía Mendoza</strong>
+            <span>Viña del Mar</span>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★★</div>
+        <p>"Como electricista, VOY me ha dado un flujo constante de clientes sin tener que salir a buscarlos. El pago es rápido y transparente."</p>
+        <div class="testimonial-author">
+          <img src="https://i.pravatar.cc/48?img=15" alt="Roberto" class="avatar avatar-sm" />
+          <div>
+            <strong>Roberto Soto</strong>
+            <span>Electricista · Viña del Mar</span>
+          </div>
+        </div>
+      </div>
+      <div class="testimonial-card">
+        <div class="testimonial-stars">★★★★☆</div>
+        <p>"Perfecta para agendar servicios de belleza a domicilio. Ya no tengo que pelearme con el tráfico para ir al salón."</p>
+        <div class="testimonial-author">
+          <img src="https://i.pravatar.cc/48?img=16" alt="Isabella" class="avatar avatar-sm" />
+          <div>
+            <strong>Isabella Torres</strong>
+            <span>Valparaíso</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA final ────────────────────────────── -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-content">
+      <h2>¿Listo para empezar?</h2>
+      <p>Únete a más de 3.000 usuarios que ya confían en VOY para sus servicios del hogar.</p>
+      <div class="cta-buttons">
+        <a href="client/index.html" class="btn btn-white btn-lg">
+          <i class="fa-solid fa-search"></i> Buscar un servicio
+        </a>
+        <a href="worker/index.html" class="btn btn-outline btn-lg" style="color:white; border-color: rgba(255,255,255,0.5);">
+          <i class="fa-solid fa-briefcase"></i> Ofrecer mi servicio
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Footer ───────────────────────────────── -->
+<footer class="footer">
+  <div class="container footer-inner">
+    <div class="footer-brand">
+      <div class="brand-logo" style="font-size: var(--text-2xl);">VOY</div>
+      <p>La plataforma de servicios locales de la Quinta Región.</p>
+      <div class="footer-social">
+        <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook"></i></a>
+        <a href="#" aria-label="WhatsApp"><i class="fa-brands fa-whatsapp"></i></a>
+      </div>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <strong>Servicios</strong>
+        <a href="#">Gasfitería</a>
+        <a href="#">Electricidad</a>
+        <a href="#">Belleza</a>
+        <a href="#">Mecánica</a>
+        <a href="#">Limpieza</a>
+      </div>
+      <div class="footer-col">
+        <strong>Empresa</strong>
+        <a href="#">Nosotros</a>
+        <a href="#">Blog</a>
+        <a href="#">Careers</a>
+        <a href="#">Prensa</a>
+      </div>
+      <div class="footer-col">
+        <strong>Soporte</strong>
+        <a href="#">Centro de ayuda</a>
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+        <a href="#">Contacto</a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">
+      <span>© 2026 VOY SpA — Quinta Región, Chile</span>
+      <span>Hecho con <i class="fa-solid fa-heart" style="color: #ef4444;"></i> en Viña del Mar</span>
+    </div>
+  </div>
+</footer>
+
+<div id="toast-container"></div>
+
+<script src="js/data.js"></script>
+<script>
+/* ── Navbar scroll ─── */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => {
+  navbar.classList.toggle('scrolled', window.scrollY > 20);
+});
+
+/* ── Mobile menu ─── */
+document.getElementById('navBurger').addEventListener('click', () => {
+  document.getElementById('navMobile').classList.toggle('open');
+});
+function closeMobileMenu() {
+  document.getElementById('navMobile').classList.remove('open');
+}
+
+/* ── Hero search ─── */
+function heroSearch() {
+  const query = document.getElementById('heroSearch').value.trim();
+  const loc   = document.getElementById('heroLocation').value.trim();
+  window.location.href = `client/index.html?q=${encodeURIComponent(query)}&loc=${encodeURIComponent(loc)}`;
+}
+document.getElementById('heroSearch').addEventListener('keydown', e => { if (e.key === 'Enter') heroSearch(); });
+
+/* ── Tabs ─── */
+function switchTab(tab, el) {
+  document.querySelectorAll('.how-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('tab-cliente').classList.toggle('hidden', tab !== 'cliente');
+  document.getElementById('tab-trabajador').classList.toggle('hidden', tab !== 'trabajador');
+}
+
+/* ── Categories ─── */
+const catGrid = document.getElementById('categoriesGrid');
+VOY_DATA.categories.forEach(cat => {
+  const count = VOY_DATA.workers.filter(w => w.category === cat.id).length;
+  catGrid.innerHTML += `
+    <a href="client/index.html?cat=${cat.id}" class="category-card" style="--cat-color:${cat.color}; --cat-bg:${cat.bg};">
+      <div class="category-icon"><i class="fa-solid ${cat.icon}"></i></div>
+      <div class="category-label">${cat.label}</div>
+      <div class="category-count">${count} profesional${count !== 1 ? 'es' : ''}</div>
+    </a>`;
+});
+
+/* ── Workers grid ─── */
+const wGrid = document.getElementById('workersGrid');
+const featured = [...VOY_DATA.workers].sort((a,b) => b.rating - a.rating).slice(0, 6);
+featured.forEach(w => {
+  const cat = VOY.getCategoryById(w.category);
+  wGrid.innerHTML += `
+    <div class="worker-card" onclick="window.location.href='client/index.html?worker=${w.id}'">
+      <div class="worker-card-header">
+        <img src="${w.avatar}" alt="${w.name}" class="avatar avatar-lg" />
+        <div class="worker-card-info">
+          <div class="worker-card-name">${w.name}</div>
+          <span class="badge badge-blue" style="background:${cat.bg}; color:${cat.color};">
+            <i class="fa-solid ${cat.icon}"></i> ${w.categoryLabel}
+          </span>
+        </div>
+        ${w.verified ? '<span class="verified-badge" title="Verificado"><i class="fa-solid fa-circle-check"></i></span>' : ''}
+      </div>
+      <div class="worker-card-stats">
+        <div class="worker-card-rating">
+          <span class="stars">★★★★${w.rating >= 5 ? '★' : '☆'}</span>
+          <span>${w.rating} · ${w.reviews} reseñas</span>
+        </div>
+        <div class="worker-card-meta">
+          <span><i class="fa-solid fa-location-dot"></i> ${VOY.formatDistance(w.distance)}</span>
+          <span><i class="fa-solid fa-briefcase"></i> ${w.completedJobs} trabajos</span>
+        </div>
+      </div>
+      <div class="worker-card-footer">
+        <div class="worker-card-price">
+          Desde <strong>${VOY.formatCLP(w.priceMin)}</strong>
+          <span class="text-muted">/ ${w.priceUnit}</span>
+        </div>
+        <span class="status-dot ${w.available ? 'online' : 'offline'}"></span>
+      </div>
+    </div>`;
+});
+</script>
+</body>
+</html>
