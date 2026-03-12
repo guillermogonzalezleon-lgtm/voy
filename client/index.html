@@ -107,27 +107,27 @@
   <aside class="sidebar" id="sidebar">
     <nav class="sidebar-nav">
       <span class="sidebar-section-label">Principal</span>
-      <a class="sidebar-link active" onclick="showView('buscar')">
+      <a class="sidebar-link active" onclick="showView('buscar', this)">
         <i class="fa-solid fa-magnifying-glass"></i> Buscar servicio
       </a>
-      <a class="sidebar-link" onclick="showView('activos')">
+      <a class="sidebar-link" onclick="showView('activos', this)">
         <i class="fa-solid fa-clock-rotate-left"></i> Servicios activos
-        <span class="sidebar-badge">1</span>
+        <span class="sidebar-badge" id="activosBadge" style="display:none;"></span>
       </a>
-      <a class="sidebar-link" onclick="showView('historial')">
+      <a class="sidebar-link" onclick="showView('historial', this)">
         <i class="fa-solid fa-list-check"></i> Historial
       </a>
       <span class="sidebar-section-label">Mi cuenta</span>
-      <a class="sidebar-link" onclick="showView('favoritos')">
+      <a class="sidebar-link" onclick="showView('favoritos', this)">
         <i class="fa-solid fa-heart"></i> Favoritos
       </a>
-      <a class="sidebar-link" onclick="showView('pagos')">
+      <a class="sidebar-link" onclick="showView('pagos', this)">
         <i class="fa-solid fa-credit-card"></i> Pagos
       </a>
-      <a class="sidebar-link" onclick="showView('notifs')">
+      <a class="sidebar-link" onclick="showView('notifs', this)">
         <i class="fa-solid fa-bell"></i> Notificaciones
       </a>
-      <a class="sidebar-link" onclick="showView('perfil')">
+      <a class="sidebar-link" onclick="showView('perfil', this)">
         <i class="fa-solid fa-user-circle"></i> Mi perfil
       </a>
     </nav>

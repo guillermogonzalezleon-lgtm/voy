@@ -569,19 +569,30 @@ function openChat() {
 
 /* ── Active badge ───────────────────────── */
 function updateActiveBadge() {
-  const count = VOY_DATA.bookings.filter(b => b.status === 'active' || b.status === 'pending').length;
-  const badge = document.querySelector('.sidebar-badge');
+  const myId = myClientId();
+  const count = VOY_DATA.bookings.filter(b =>
+    (b.status === 'active' || b.status === 'pending') && (!myId || b.clientId === myId)
+  ).length;
+  const badge = document.getElementById('activosBadge');
   if (badge) {
     badge.textContent = count;
     badge.style.display = count > 0 ? '' : 'none';
   }
 }
 
+/* ── Helpers ─────────────────────────────── */
+function myClientId() {
+  return clientData?.id || clientSession?.id;
+}
+
 /* ── Active services ────────────────────── */
 function loadActiveServices() {
   const el = document.getElementById('activeServices');
   if (!el) return;
-  const active = VOY_DATA.bookings.filter(b => b.status === 'active' || b.status === 'pending');
+  const myId = myClientId();
+  const active = VOY_DATA.bookings.filter(b =>
+    (b.status === 'active' || b.status === 'pending') && (!myId || b.clientId === myId)
+  );
   if (!active.length) {
     el.innerHTML = '<div class="empty-state"><i class="fa-solid fa-calendar-days"></i><h3>Sin servicios activos</h3><p>Cuando agendes un servicio aparecerá aquí.</p></div>';
     return;
@@ -637,7 +648,10 @@ async function cancelBooking(recordId) {
 function loadHistorial() {
   const el = document.getElementById('historialTable');
   if (!el) return;
-  const completed = VOY_DATA.bookings.filter(b => b.status === 'completed');
+  const myId = myClientId();
+  const completed = VOY_DATA.bookings.filter(b =>
+    b.status === 'completed' && (!myId || b.clientId === myId)
+  );
   el.innerHTML = `
     <thead>
       <tr>
@@ -717,9 +731,11 @@ function loadClientProfile() {
     return;
   }
 
+  const myId           = myClientId();
+  const myBookings     = VOY_DATA.bookings.filter(b => !myId || b.clientId === myId);
   const favCount       = favorites.size;
-  const completedCount = VOY_DATA.bookings.filter(b => b.status === 'completed').length;
-  const reviewCount    = VOY_DATA.bookings.filter(b => b.rating).length;
+  const completedCount = myBookings.filter(b => b.status === 'completed').length;
+  const reviewCount    = myBookings.filter(b => b.rating).length;
   const memberSince    = client.memberSince
     ? new Date(client.memberSince).toLocaleDateString('es-CL', { month: 'long', year: 'numeric' })
     : 'Miembro VOY';
@@ -904,7 +920,10 @@ async function changeClientPassword(recordId, currentHash) {
 async function loadPagos() {
   const el = document.getElementById('pagosView');
   if (!el) return;
-  const txs = VOY_DATA.bookings.filter(b => b.status === 'completed');
+  const myId = myClientId();
+  const txs = VOY_DATA.bookings.filter(b =>
+    b.status === 'completed' && (!myId || b.clientId === myId)
+  );
 
   el.innerHTML = `
     <div style="display:grid; grid-template-columns: 360px 1fr; gap:var(--sp-6);">
@@ -1016,11 +1035,12 @@ function loadNotificationsView() {
 }
 
 /* ── View switcher ──────────────────────── */
-function showView(name) {
+function showView(name, el) {
   document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.getElementById(`view-${name}`)?.classList.remove('hidden');
-  event?.currentTarget?.classList.add('active');
+  const activeLink = el || document.querySelector(`.sidebar-link[onclick*="'${name}'"]`);
+  if (activeLink) activeLink.classList.add('active');
 
   if (name === 'favoritos') loadFavorites();
   if (name === 'historial') loadHistorial();
