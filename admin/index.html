@@ -58,7 +58,7 @@
       </a>
       <a class="sidebar-link" onclick="showView('verificaciones', this)">
         <i class="fa-solid fa-shield-halved"></i> Verificaciones
-        <span class="sidebar-badge">12</span>
+        <span class="sidebar-badge" id="verifBadge">12</span>
       </a>
       <a class="sidebar-link" onclick="showView('usuarios', this)">
         <i class="fa-solid fa-users"></i> Usuarios
@@ -95,7 +95,7 @@
         <div class="stat-card">
           <div class="stat-card-icon" style="background:#dbeafe;color:var(--color-primary);"><i class="fa-solid fa-users"></i></div>
           <div class="stat-card-info">
-            <div class="stat-card-value">3.789</div>
+            <div class="stat-card-value" id="statTotalUsers">3.789</div>
             <div class="stat-card-label">Usuarios totales</div>
             <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +127 este mes</div>
           </div>
@@ -103,7 +103,7 @@
         <div class="stat-card">
           <div class="stat-card-icon" style="background:#d1fae5;color:var(--color-success);"><i class="fa-solid fa-briefcase"></i></div>
           <div class="stat-card-info">
-            <div class="stat-card-value">548</div>
+            <div class="stat-card-value" id="statTotalWorkers">548</div>
             <div class="stat-card-label">Profesionales activos</div>
             <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +34 este mes</div>
           </div>
@@ -111,7 +111,7 @@
         <div class="stat-card">
           <div class="stat-card-icon" style="background:#fef3c7;color:var(--color-warning);"><i class="fa-solid fa-handshake"></i></div>
           <div class="stat-card-info">
-            <div class="stat-card-value">12.890</div>
+            <div class="stat-card-value" id="statTotalServices">12.890</div>
             <div class="stat-card-label">Servicios completados</div>
             <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +823 este mes</div>
           </div>
@@ -119,7 +119,7 @@
         <div class="stat-card">
           <div class="stat-card-icon" style="background:#ede9fe;color:#7c3aed;"><i class="fa-solid fa-sack-dollar"></i></div>
           <div class="stat-card-info">
-            <div class="stat-card-value">$89,4M</div>
+            <div class="stat-card-value" id="statRevenue">$89,4M</div>
             <div class="stat-card-label">Volumen transaccional</div>
             <div class="stat-card-trend up"><i class="fa-solid fa-arrow-trend-up"></i> +22% vs mes anterior</div>
           </div>
@@ -239,6 +239,8 @@
 </div>
 
 <div id="toast-container"></div>
+<script src="../js/config.js"></script>
+<script src="../js/airtable.js"></script>
 <script src="../js/data.js"></script>
 <script src="../js/admin.js"></script>
 </body>

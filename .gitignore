@@ -1,6 +1,9 @@
 .DS_Store
+js/config.js
+setup/ids.json
 .env
 .env.local
 node_modules/
 .vercel/
 *.log
+.vercel

@@ -1,24 +1,37 @@
 /* ============================================
-   VOY — Client App Logic
+   VOY — Client App Logic (Airtable conectado)
    ============================================ */
 
-let map, markers = [], selectedWorker = null, favorites = new Set([3, 7]);
+let map, markers = [], selectedWorker = null;
+let favorites = VoyDB.getFavorites();
 let currentCategory = 'all', currentRadius = 10, listView = 'list';
 
 /* ── Init ───────────────────────────────── */
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   buildCategoryChips();
   initMap();
-  filterWorkers();
-  loadActiveServices();
-  loadHistorial();
-  loadClientProfile();
-  loadPagos();
-  loadFavorites();
-  loadNotifications();
-  handleURLParams();
-  setTodayDate();
+  showLoadingState();
+
+  try {
+    await VOY_DATA.init();
+    filterWorkers();
+    loadActiveServices();
+    loadHistorial();
+    loadClientProfile();
+    loadPagos();
+    loadFavorites();
+    loadNotifications();
+    handleURLParams();
+    setTodayDate();
+  } catch (e) {
+    VOY.showToast('Error conectando con la base de datos', 'error');
+    console.error(e);
+  }
 });
+
+function showLoadingState() {
+  VOY.showLoading('providersList', 'Cargando profesionales...');
+}
 
 function setTodayDate() {
   const today = new Date().toISOString().split('T')[0];
@@ -151,7 +164,6 @@ function initMap() {
     maxZoom: 19,
   }).addTo(map);
 
-  // User marker
   const userIcon = L.divIcon({
     html: '<div style="width:16px;height:16px;border-radius:50%;background:#2563EB;border:3px solid white;box-shadow:0 2px 8px rgba(37,99,235,0.5);"></div>',
     iconSize: [16, 16], iconAnchor: [8, 8], className: '',
@@ -205,7 +217,6 @@ function openWorkerDetail(id) {
   const cat = VOY.getCategoryById(selectedWorker.category);
 
   document.getElementById('workerDetailBody').innerHTML = `
-    <!-- Profile header -->
     <div style="text-align:center; padding: var(--sp-5) 0; border-bottom:1px solid var(--gray-100); margin-bottom:var(--sp-5);">
       <div style="position:relative; display:inline-block; margin-bottom:var(--sp-4);">
         <img src="${selectedWorker.avatar}" alt="${selectedWorker.name}" class="avatar avatar-xl" style="width:88px;height:88px;" />
@@ -234,20 +245,17 @@ function openWorkerDetail(id) {
       </div>
     </div>
 
-    <!-- Info chips -->
     <div style="display:flex; flex-wrap:wrap; gap:var(--sp-2); margin-bottom:var(--sp-5);">
       <span class="badge badge-gray"><i class="fa-solid fa-location-dot" style="color:var(--color-primary);"></i> ${selectedWorker.city} · ${VOY.formatDistance(selectedWorker.distance)}</span>
       <span class="badge badge-gray"><i class="fa-solid fa-clock" style="color:var(--color-primary);"></i> Responde ${selectedWorker.responseTime}</span>
       <span class="badge ${selectedWorker.available ? 'badge-green' : 'badge-gray'}">${selectedWorker.available ? '● Disponible ahora' : '○ No disponible'}</span>
     </div>
 
-    <!-- Bio -->
     <div class="detail-section">
       <h4>Sobre mí</h4>
       <p style="font-size:var(--text-sm); color:var(--gray-600); line-height:1.7;">${selectedWorker.bio}</p>
     </div>
 
-    <!-- Skills -->
     <div class="detail-section">
       <h4>Especialidades</h4>
       <div class="skill-tags">
@@ -255,7 +263,6 @@ function openWorkerDetail(id) {
       </div>
     </div>
 
-    <!-- Pricing -->
     <div class="detail-section">
       <h4>Tarifas</h4>
       <div style="background:var(--blue-50); border-radius:var(--radius-xl); padding:var(--sp-4);">
@@ -266,7 +273,6 @@ function openWorkerDetail(id) {
       </div>
     </div>
 
-    <!-- Gallery -->
     ${selectedWorker.gallery.length > 0 ? `
     <div class="detail-section">
       <h4>Trabajos realizados</h4>
@@ -275,20 +281,20 @@ function openWorkerDetail(id) {
       </div>
     </div>` : ''}
 
-    <!-- Reviews -->
-    <div class="detail-section">
+    <div class="detail-section" id="reviewsSection">
       <h4>Reseñas recientes</h4>
-      ${generateMockReviews(selectedWorker)}
+      <div id="workerReviews"><i class="fa-solid fa-spinner fa-spin" style="color:var(--gray-300);"></i></div>
     </div>
   `;
 
   document.getElementById('workerDetail').classList.add('open');
 
-  // Update booking modal
+  // Cargar reseñas reales desde Bookings
+  loadWorkerReviewsInDetail(selectedWorker.id);
+
   const svc = document.getElementById('bookingService');
-  if (svc) {
-    svc.innerHTML = selectedWorker.skills.map(s => `<option>${s}</option>`).join('');
-  }
+  if (svc) svc.innerHTML = selectedWorker.skills.map(s => `<option>${s}</option>`).join('');
+
   const info = document.getElementById('bookingWorkerInfo');
   if (info) {
     info.innerHTML = `
@@ -304,30 +310,37 @@ function openWorkerDetail(id) {
   }
   updateBookingSummary();
 
-  // Highlight on map
   if (map) map.flyTo([selectedWorker.lat, selectedWorker.lng], 14, { duration: 0.8 });
 }
 
-function generateMockReviews(worker) {
-  const names = ['Sofía M.', 'Andrés R.', 'Carolina V.', 'Rodrigo P.'];
-  const texts = [
-    'Excelente trabajo, muy puntual y dejó todo muy limpio.',
-    'Super profesional, resolvió el problema rápidamente. Lo recomiendo.',
-    'Muy buen servicio, precio justo y trabajo impecable.',
-    'Llegó a tiempo y el resultado fue perfecto. Volvería a contratar.',
-  ];
-  return names.slice(0, 3).map((name, i) => `
-    <div class="review-item">
-      <div class="review-header">
-        <img src="https://i.pravatar.cc/32?img=${20 + i}" class="avatar avatar-xs" />
-        <div>
-          <div style="font-size:var(--text-sm); font-weight:600; color:var(--gray-900);">${name}</div>
-          <div class="review-stars">★★★★★</div>
+async function loadWorkerReviewsInDetail(workerId) {
+  const el = document.getElementById('workerReviews');
+  if (!el) return;
+  try {
+    const bookings = await VoyDB.getBookings({ status: 'completed' });
+    const reviews = bookings.filter(b => b.workerId === workerId && b.rating);
+    if (!reviews.length) {
+      el.innerHTML = '<p style="color:var(--gray-400);font-size:var(--text-sm);">Aún sin reseñas.</p>';
+      return;
+    }
+    el.innerHTML = reviews.map(b => {
+      const client = VOY_DATA.clients.find(c => c.id === b.clientId);
+      return `
+      <div class="review-item">
+        <div class="review-header">
+          <img src="${client?.avatar || 'https://i.pravatar.cc/32'}" class="avatar avatar-xs" />
+          <div>
+            <div style="font-size:var(--text-sm); font-weight:600; color:var(--gray-900);">${client?.name || 'Cliente'}</div>
+            <div class="review-stars">${'★'.repeat(b.rating)}${'☆'.repeat(5 - b.rating)}</div>
+          </div>
+          <span style="margin-left:auto; font-size:var(--text-xs); color:var(--gray-400);">${b.date}</span>
         </div>
-        <span style="margin-left:auto; font-size:var(--text-xs); color:var(--gray-400);">Hace ${i + 1} semana${i > 0 ? 's' : ''}</span>
-      </div>
-      <div class="review-text">"${texts[i]}"</div>
-    </div>`).join('');
+        ${b.review ? `<div class="review-text">"${b.review}"</div>` : ''}
+      </div>`;
+    }).join('');
+  } catch {
+    el.innerHTML = '<p style="color:var(--gray-400);font-size:var(--text-sm);">No se pudieron cargar reseñas.</p>';
+  }
 }
 
 function closeWorkerDetail() {
@@ -337,15 +350,12 @@ function closeWorkerDetail() {
 
 function toggleFavorite() {
   if (!selectedWorker) return;
-  if (favorites.has(selectedWorker.id)) {
-    favorites.delete(selectedWorker.id);
-    document.getElementById('btnFavorite').innerHTML = '<i class="fa-regular fa-heart"></i>';
-    VOY.showToast('Eliminado de favoritos', 'info');
-  } else {
-    favorites.add(selectedWorker.id);
-    document.getElementById('btnFavorite').innerHTML = '<i class="fa-solid fa-heart" style="color:#ef4444;"></i>';
-    VOY.showToast('Guardado en favoritos ❤️', 'success');
-  }
+  favorites = VoyDB.toggleFavoriteLocal(selectedWorker.id);
+  const isFav = favorites.has(selectedWorker.id);
+  document.getElementById('btnFavorite').innerHTML = isFav
+    ? '<i class="fa-solid fa-heart" style="color:#ef4444;"></i>'
+    : '<i class="fa-regular fa-heart"></i>';
+  VOY.showToast(isFav ? 'Guardado en favoritos ❤️' : 'Eliminado de favoritos', isFav ? 'success' : 'info');
   filterWorkers();
 }
 
@@ -359,7 +369,6 @@ function updateBookingSummary() {
   if (!selectedWorker) return;
   const el = document.getElementById('bookingPriceSummary');
   if (!el) return;
-  const commission = Math.round(selectedWorker.priceMin * 0.15);
   el.innerHTML = `
     <div style="display:flex; justify-content:space-between; margin-bottom:var(--sp-2);">
       <span style="color:var(--gray-600);">Precio estimado</span>
@@ -377,55 +386,102 @@ function updateBookingSummary() {
     <div style="font-size:var(--text-xs); color:var(--gray-400); margin-top:var(--sp-2);">El precio final se acuerda con el profesional antes del inicio del servicio.</div>`;
 }
 
-function confirmBooking() {
+async function confirmBooking() {
   if (!selectedWorker) return;
-  VOY.closeModal('bookingModal');
-  VOY.showToast(`¡Solicitud enviada a ${selectedWorker.name}!`, 'success');
-  setTimeout(() => VOY.showToast('El profesional confirmará en breve.', 'info'), 1500);
+  const date    = document.getElementById('bookingDate')?.value || '';
+  const time    = document.getElementById('bookingTime')?.value || '';
+  const address = document.getElementById('bookingAddress')?.value || '';
+  const service = document.getElementById('bookingService')?.value || selectedWorker.skills[0] || '';
+
+  const btn = document.querySelector('#bookingModal .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+
+  try {
+    await VoyDB.createBooking({
+      clientId:   101,
+      workerId:   selectedWorker.id,
+      category:   selectedWorker.category,
+      service,
+      date,
+      time,
+      address,
+      price:      selectedWorker.priceMin,
+    });
+
+    // Crear también la solicitud en la tabla Requests para el worker
+    await VoyDB.createRequest({
+      clientName:     VOY_DATA.clients[0]?.name || 'Cliente',
+      clientAvatar:   VOY_DATA.clients[0]?.avatar || '',
+      clientRating:   5,
+      service,
+      date,
+      time,
+      address,
+      estimatedPrice: selectedWorker.priceMin,
+      distance:       selectedWorker.distance,
+      workerRecordId: selectedWorker._recordId,
+    });
+
+    // Refrescar bookings
+    VOY_DATA.bookings = await VoyDB.getBookings();
+
+    VOY.closeModal('bookingModal');
+    VOY.showToast(`¡Solicitud enviada a ${selectedWorker.name}!`, 'success');
+    setTimeout(() => VOY.showToast('El profesional confirmará en breve.', 'info'), 1500);
+    loadActiveServices();
+  } catch (e) {
+    VOY.showToast('Error al crear la reserva. Intenta de nuevo.', 'error');
+    console.error(e);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Confirmar reserva'; }
+  }
 }
 
 /* ── Chat ───────────────────────────────── */
-const chatLog = [
-  { from: 'other', text: 'Hola, ¿en qué te puedo ayudar?', time: '14:30' },
-  { from: 'me',    text: 'Hola Carlos, tengo una filtración en el baño.', time: '14:31' },
-  { from: 'other', text: 'Claro, puedo ir esta tarde. ¿A qué hora te acomoda?', time: '14:32' },
-];
+let chatConversationId = 'conv-1-101';
 
-function toggleChat() {
+async function toggleChat() {
   const panel = document.getElementById('chatPanel');
   if (!panel) return;
   const showing = panel.style.display !== 'none';
   panel.style.display = showing ? 'none' : 'flex';
   panel.style.flexDirection = 'column';
-  if (!showing) {
-    renderChatMessages();
+  if (!showing) await renderChatMessages();
+}
+
+async function renderChatMessages() {
+  const el = document.getElementById('chatMessages');
+  if (!el) return;
+  el.innerHTML = '<div style="text-align:center;padding:8px;color:var(--gray-300);font-size:12px;"><i class="fa-solid fa-spinner fa-spin"></i></div>';
+  try {
+    const msgs = await VoyDB.getMessages(chatConversationId);
+    if (!msgs.length) {
+      el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--gray-400);font-size:13px;">Inicia la conversación</div>';
+      return;
+    }
+    el.innerHTML = msgs.map(m => `
+      <div class="chat-msg ${m.from === 'client' ? 'sent' : 'received'}">
+        <div class="chat-msg-bubble">${m.text}</div>
+        <div class="chat-msg-time">${m.time}</div>
+      </div>`).join('');
+    el.scrollTop = el.scrollHeight;
+  } catch {
+    el.innerHTML = '<div style="text-align:center;padding:16px;color:var(--gray-400);">Error cargando mensajes</div>';
   }
 }
 
-function renderChatMessages() {
-  const el = document.getElementById('chatMessages');
-  if (!el) return;
-  el.innerHTML = chatLog.map(m => `
-    <div class="chat-msg ${m.from === 'me' ? 'sent' : 'received'}">
-      <div class="chat-msg-bubble">${m.text}</div>
-      <div class="chat-msg-time">${m.time}</div>
-    </div>`).join('');
-  el.scrollTop = el.scrollHeight;
-}
-
-function sendMessage() {
+async function sendMessage() {
   const input = document.getElementById('chatInput');
   const text = input?.value.trim();
   if (!text) return;
-  const now = new Date();
-  chatLog.push({ from: 'me', text, time: `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}` });
   input.value = '';
-  renderChatMessages();
-  // Auto reply
-  setTimeout(() => {
-    chatLog.push({ from: 'other', text: '¡Perfecto! Te confirmo de inmediato.', time: `${now.getHours()}:${String(now.getMinutes()+1).padStart(2,'0')}` });
-    renderChatMessages();
-  }, 1500);
+
+  try {
+    await VoyDB.sendMessage(chatConversationId, 'client', text);
+    await renderChatMessages();
+  } catch (e) {
+    VOY.showToast('Error al enviar mensaje', 'error');
+  }
 }
 
 function handleChatKey(e) {
@@ -433,6 +489,9 @@ function handleChatKey(e) {
 }
 
 function openChat() {
+  if (selectedWorker) {
+    chatConversationId = `conv-${selectedWorker.id}-101`;
+  }
   closeWorkerDetail();
   toggleChat();
 }
@@ -454,10 +513,10 @@ function loadActiveServices() {
     <div class="card" style="margin-bottom:var(--sp-4);">
       <div class="card-body">
         <div style="display:flex; align-items:center; gap:var(--sp-4);">
-          <img src="${worker?.avatar}" class="avatar avatar-lg" />
+          <img src="${worker?.avatar || ''}" class="avatar avatar-lg" />
           <div style="flex:1;">
             <div style="display:flex; align-items:center; gap:var(--sp-3); margin-bottom:var(--sp-1);">
-              <strong>${worker?.name}</strong>
+              <strong>${worker?.name || 'Profesional'}</strong>
               <span class="badge ${statusColors[b.status]}">${statusLabels[b.status]}</span>
             </div>
             <div style="font-size:var(--text-sm); color:var(--gray-600);">${b.service}</div>
@@ -473,11 +532,23 @@ function loadActiveServices() {
         </div>
         <div style="display:flex; gap:var(--sp-3); margin-top:var(--sp-4);">
           <button class="btn btn-outline btn-sm" onclick="toggleChat()"><i class="fa-solid fa-comment-dots"></i> Mensaje</button>
-          ${b.status === 'active' ? '<button class="btn btn-danger btn-sm"><i class="fa-solid fa-xmark"></i> Cancelar</button>' : ''}
+          ${b.status === 'active' ? `<button class="btn btn-danger btn-sm" onclick="cancelBooking('${b._recordId}')"><i class="fa-solid fa-xmark"></i> Cancelar</button>` : ''}
         </div>
       </div>
     </div>`;
   }).join('');
+}
+
+async function cancelBooking(recordId) {
+  if (!confirm('¿Confirmas la cancelación?')) return;
+  try {
+    await VoyDB.updateBookingStatus(recordId, 'cancelled');
+    VOY_DATA.bookings = await VoyDB.getBookings();
+    loadActiveServices();
+    VOY.showToast('Reserva cancelada', 'info');
+  } catch (e) {
+    VOY.showToast('Error al cancelar', 'error');
+  }
 }
 
 /* ── Historial ──────────────────────────── */
@@ -488,13 +559,7 @@ function loadHistorial() {
   el.innerHTML = `
     <thead>
       <tr>
-        <th>Ref.</th>
-        <th>Servicio</th>
-        <th>Profesional</th>
-        <th>Fecha</th>
-        <th>Total</th>
-        <th>Estado</th>
-        <th>Calificación</th>
+        <th>Ref.</th><th>Servicio</th><th>Profesional</th><th>Fecha</th><th>Total</th><th>Estado</th><th>Calificación</th><th></th>
       </tr>
     </thead>
     <tbody>
@@ -505,17 +570,56 @@ function loadHistorial() {
           <td>${b.service}</td>
           <td>
             <div style="display:flex; align-items:center; gap:var(--sp-2);">
-              <img src="${w?.avatar}" class="avatar avatar-xs" />
-              ${w?.name}
+              <img src="${w?.avatar || ''}" class="avatar avatar-xs" />
+              ${w?.name || 'Profesional'}
             </div>
           </td>
           <td>${b.date}</td>
           <td style="font-weight:600; color:var(--color-primary);">${VOY.formatCLP(b.price)}</td>
           <td><span class="badge badge-green">Completado</span></td>
-          <td>${b.rating ? '★'.repeat(b.rating) : '-'}</td>
+          <td>${b.rating ? '★'.repeat(b.rating) : '<span style="color:var(--gray-300);">Sin calificar</span>'}</td>
+          <td>${!b.rating ? `<button class="btn btn-ghost btn-sm" onclick="openRatingModal('${b._recordId}')">⭐ Calificar</button>` : ''}</td>
         </tr>`;
       }).join('')}
     </tbody>`;
+}
+
+/* ── Rating modal ───────────────────────── */
+let pendingRatingRecordId = null;
+let selectedRating = 5;
+
+function setRating(val) {
+  selectedRating = val;
+  document.querySelectorAll('#starRating span').forEach((s, i) => {
+    s.style.color = i < val ? 'var(--color-warning)' : 'var(--gray-300)';
+  });
+}
+
+function openRatingModal(recordId) {
+  pendingRatingRecordId = recordId;
+  selectedRating = 5;
+  setRating(5);
+  const textarea = document.getElementById('ratingComment');
+  if (textarea) textarea.value = '';
+  VOY.openModal('ratingModal');
+}
+
+async function submitRating() {
+  if (!pendingRatingRecordId) return;
+  const review = document.getElementById('ratingComment')?.value || '';
+  const btn = document.querySelector('#ratingModal .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Enviando...'; }
+  try {
+    await VoyDB.addBookingReview(pendingRatingRecordId, selectedRating, review);
+    VOY_DATA.bookings = await VoyDB.getBookings();
+    VOY.closeModal('ratingModal');
+    VOY.showToast('¡Gracias por tu calificación!', 'success');
+    loadHistorial();
+  } catch (e) {
+    VOY.showToast('Error al guardar la calificación', 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i class="fa-solid fa-star"></i> Enviar calificación'; }
+  }
 }
 
 /* ── Client profile ─────────────────────── */
@@ -523,6 +627,7 @@ function loadClientProfile() {
   const el = document.getElementById('clientProfile');
   if (!el) return;
   const client = VOY_DATA.clients[0];
+  if (!client) return;
   el.innerHTML = `
     <div style="display:grid; grid-template-columns:300px 1fr; gap:var(--sp-6);">
       <div class="card">
@@ -534,7 +639,7 @@ function loadClientProfile() {
           </p>
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-3); text-align:center; padding:var(--sp-4); background:var(--gray-50); border-radius:var(--radius-xl);">
             <div><div style="font-size:var(--text-xl); font-weight:800;">${client.totalServices}</div><div style="font-size:var(--text-xs); color:var(--gray-400);">Servicios</div></div>
-            <div><div style="font-size:var(--text-xl); font-weight:800;">5</div><div style="font-size:var(--text-xs); color:var(--gray-400);">Reseñas</div></div>
+            <div><div style="font-size:var(--text-xl); font-weight:800;">${VOY_DATA.bookings.filter(b=>b.rating).length}</div><div style="font-size:var(--text-xs); color:var(--gray-400);">Reseñas</div></div>
           </div>
           <button class="btn btn-outline btn-block" style="margin-top:var(--sp-4);">
             <i class="fa-solid fa-pencil"></i> Editar perfil
@@ -545,12 +650,12 @@ function loadClientProfile() {
         <div class="card-header"><strong>Información personal</strong></div>
         <div class="card-body">
           <div style="display:grid; grid-template-columns:1fr 1fr; gap:var(--sp-4);">
-            <div class="input-group"><label class="input-label">Nombre completo</label><input class="input" value="${client.name}" /></div>
-            <div class="input-group"><label class="input-label">Teléfono</label><input class="input" value="+56 9 8765 4321" /></div>
-            <div class="input-group"><label class="input-label">Email</label><input class="input" value="sofia.mendoza@gmail.com" /></div>
-            <div class="input-group"><label class="input-label">Ciudad</label><input class="input" value="${client.city}" /></div>
+            <div class="input-group"><label class="input-label">Nombre completo</label><input class="input" id="cName" value="${client.name}" /></div>
+            <div class="input-group"><label class="input-label">Teléfono</label><input class="input" id="cPhone" value="${client.phone || ''}" /></div>
+            <div class="input-group"><label class="input-label">Email</label><input class="input" id="cEmail" value="${client.email || ''}" /></div>
+            <div class="input-group"><label class="input-label">Ciudad</label><input class="input" id="cCity" value="${client.city}" /></div>
           </div>
-          <button class="btn btn-primary" style="margin-top:var(--sp-5);" onclick="VOY.showToast('Perfil actualizado', 'success')">
+          <button class="btn btn-primary" style="margin-top:var(--sp-5);" onclick="saveClientProfile('${client._recordId}')">
             <i class="fa-solid fa-check"></i> Guardar cambios
           </button>
         </div>
@@ -558,10 +663,27 @@ function loadClientProfile() {
     </div>`;
 }
 
+async function saveClientProfile(recordId) {
+  try {
+    await VoyDB.saveClientProfile(recordId, {
+      name:  document.getElementById('cName')?.value,
+      phone: document.getElementById('cPhone')?.value,
+      email: document.getElementById('cEmail')?.value,
+      city:  document.getElementById('cCity')?.value,
+    });
+    VOY_DATA.clients = await VoyDB.getClients();
+    VOY.showToast('Perfil actualizado', 'success');
+  } catch (e) {
+    VOY.showToast('Error al guardar perfil', 'error');
+  }
+}
+
 /* ── Pagos ──────────────────────────────── */
-function loadPagos() {
+async function loadPagos() {
   const el = document.getElementById('pagosView');
   if (!el) return;
+  const txs = VOY_DATA.bookings.filter(b => b.status === 'completed');
+
   el.innerHTML = `
     <div style="display:grid; grid-template-columns: 360px 1fr; gap:var(--sp-6);">
       <div class="card">
@@ -579,7 +701,7 @@ function loadPagos() {
             <i class="fa-brands fa-cc-mastercard" style="font-size:2rem;color:#eb001b;"></i>
             <div style="flex:1;"><div style="font-weight:600;">Mastercard •••• 8890</div><div style="font-size:var(--text-xs);color:var(--gray-400);">Vence 03/26</div></div>
           </div>
-          <div style="padding:var(--sp-4);border:1.5px dashed var(--gray-300);border-radius:var(--radius-xl);text-align:center;cursor:pointer;color:var(--gray-400);">
+          <div style="padding:var(--sp-4);border:1.5px dashed var(--gray-300);border-radius:var(--radius-xl);text-align:center;cursor:pointer;color:var(--gray-400);" onclick="VOY.showToast('Próximamente: Webpay + Transferencia','info')">
             <i class="fa-solid fa-plus"></i> Agregar Webpay / Transferencia
           </div>
         </div>
@@ -590,9 +712,13 @@ function loadPagos() {
           <table class="data-table">
             <thead><tr><th>Fecha</th><th>Servicio</th><th>Monto</th><th>Estado</th></tr></thead>
             <tbody>
-              <tr><td>08 Mar 2026</td><td>Reparación de filtración</td><td style="color:var(--color-danger);">-$35.000</td><td><span class="badge badge-green">Pagado</span></td></tr>
-              <tr><td>01 Mar 2026</td><td>Instalación eléctrica</td><td style="color:var(--color-danger);">-$48.000</td><td><span class="badge badge-green">Pagado</span></td></tr>
-              <tr><td>20 Feb 2026</td><td>Limpieza hogar</td><td style="color:var(--color-danger);">-$32.000</td><td><span class="badge badge-green">Pagado</span></td></tr>
+              ${txs.map(b => `
+              <tr>
+                <td>${b.date}</td>
+                <td>${b.service}</td>
+                <td style="color:var(--color-danger);">-${VOY.formatCLP(b.price)}</td>
+                <td><span class="badge badge-green">Pagado</span></td>
+              </tr>`).join('')}
             </tbody>
           </table>
         </div>
@@ -627,14 +753,26 @@ function loadFavorites() {
 }
 
 /* ── Notifications ──────────────────────── */
-function loadNotifications() {
+async function loadNotifications() {
   const el = document.getElementById('notifList');
   if (!el) return;
-  const notifs = [
-    { icon: '✅', bg: '#d1fae5', text: '<strong>Carlos Muñoz</strong> confirmó tu reserva para el 15 de marzo.', time: 'Hace 2 horas', unread: true },
-    { icon: '⭐', bg: '#fef3c7', text: 'Califica tu servicio de <strong>gasfitería</strong> del 8 de marzo.', time: 'Hace 3 días', unread: true },
-    { icon: '💬', bg: '#dbeafe', text: '<strong>Ana Ramírez</strong> te envió un mensaje.', time: 'Hace 5 días', unread: false },
-  ];
+
+  const activeBookings  = VOY_DATA.bookings.filter(b => b.status === 'active');
+  const pendingRatings  = VOY_DATA.bookings.filter(b => b.status === 'completed' && !b.rating);
+  const notifs = [];
+
+  activeBookings.forEach(b => {
+    const w = VOY_DATA.workers.find(x => x.id === b.workerId);
+    notifs.push({ icon: '✅', bg: '#d1fae5', text: `<strong>${w?.name || 'Profesional'}</strong> confirmó tu reserva para el ${b.date}.`, time: 'Reciente', unread: true });
+  });
+  pendingRatings.forEach(b => {
+    notifs.push({ icon: '⭐', bg: '#fef3c7', text: `Califica tu servicio de <strong>${b.category}</strong> del ${b.date}.`, time: 'Pendiente', unread: true });
+  });
+
+  if (!notifs.length) {
+    notifs.push({ icon: '💡', bg: '#dbeafe', text: 'No tienes notificaciones pendientes.', time: 'Ahora', unread: false });
+  }
+
   el.innerHTML = notifs.map(n => `
     <div class="notif-item ${n.unread ? 'unread' : ''}">
       <div class="notif-icon" style="background:${n.bg};">${n.icon}</div>
@@ -647,6 +785,15 @@ function loadNotifications() {
 
 function openNotifications() { VOY.openModal('notifModal'); }
 
+function loadNotificationsView() {
+  // Rende las mismas notificaciones en la vista de página completa
+  const el = document.getElementById('notifListView');
+  if (!el) return;
+  const src = document.getElementById('notifList');
+  if (src) el.innerHTML = src.innerHTML;
+  else loadNotifications();
+}
+
 /* ── View switcher ──────────────────────── */
 function showView(name) {
   document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
@@ -655,6 +802,11 @@ function showView(name) {
   event?.currentTarget?.classList.add('active');
 
   if (name === 'favoritos') loadFavorites();
+  if (name === 'historial') loadHistorial();
+  if (name === 'pagos')     loadPagos();
+  if (name === 'perfil')    loadClientProfile();
+  if (name === 'notifs')    loadNotificationsView();
+  if (name === 'activos')   loadActiveServices();
 }
 
 /* ── Close modals on overlay click ─────── */
