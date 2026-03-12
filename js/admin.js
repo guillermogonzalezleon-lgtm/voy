@@ -83,6 +83,11 @@ function setEl(id, val) {
 
 /* ── Admin stats ────────────────────────── */
 function loadAdminStats() {
+  // Subtitle dinámico
+  const now = new Date();
+  const months = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+  const subtitleEl = document.getElementById('adminSubtitle');
+  if (subtitleEl) subtitleEl.textContent = `Quinta Región Beta · ${months[now.getMonth()]} ${now.getFullYear()}`;
   const s   = VOY_DATA.stats;
   const total = s.totalWorkers + s.totalClients;
 
@@ -96,7 +101,11 @@ function loadAdminStats() {
 
   // Actualizar badge de verificaciones en sidebar
   const pending = adminVerifications.filter(v => v.status === 'pending').length;
-  setEl('verifBadge', pending || '');
+  const verifBadge = document.getElementById('verifBadge');
+  if (verifBadge) {
+    verifBadge.textContent = pending;
+    verifBadge.style.display = pending > 0 ? '' : 'none';
+  }
 }
 
 /* ── Admin chart ────────────────────────── */
@@ -636,7 +645,8 @@ function showView(name, el) {
   document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.getElementById(`view-${name}`)?.classList.remove('hidden');
-  if (el) el.classList.add('active');
+  const activeLink = el || document.querySelector(`.sidebar-link[onclick*="'${name}'"]`);
+  if (activeLink) activeLink.classList.add('active');
 
   // Los IDs en el HTML son: overview, verificaciones, usuarios, transacciones, categorias, configuracion
   if (name === 'verificaciones') loadVerificationsList();
