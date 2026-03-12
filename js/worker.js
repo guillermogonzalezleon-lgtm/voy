@@ -35,8 +35,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadWorkerNotifications();
     updateAvailabilityUI();
   } catch (e) {
-    VOY.showToast('Error conectando con la base de datos', 'error');
     console.error(e);
+    VOY.showAppError('Error de conexión', e.message || 'No se pudo cargar el panel.');
   }
 });
 

@@ -94,11 +94,36 @@ const VOY = {
       <p style="margin-top:var(--sp-4);color:var(--gray-400);">${msg}</p>
     </div>`;
   },
-  showError(containerId, msg = 'Error al cargar datos. Intenta nuevamente.') {
+  showError(containerId, msg = 'Error al cargar datos. Intenta nuevamente.', retryFn = null) {
     const el = document.getElementById(containerId);
     if (el) el.innerHTML = `<div class="empty-state" style="padding:var(--sp-10);">
       <i class="fa-solid fa-triangle-exclamation" style="font-size:2rem;color:var(--color-danger);"></i>
-      <p style="margin-top:var(--sp-4);color:var(--gray-500);">${msg}</p>
+      <p style="margin-top:var(--sp-3);color:var(--gray-500);">${msg}</p>
+      ${retryFn ? `<button class="btn btn-outline" style="margin-top:var(--sp-4);" onclick="${retryFn}()">
+        <i class="fa-solid fa-rotate-right"></i> Reintentar
+      </button>` : ''}
     </div>`;
+  },
+
+  showAppError(title = 'Error de conexión', msg = 'No se pudo conectar con la base de datos.') {
+    // Error de pantalla completa con botón de recarga
+    const main = document.querySelector('.app-main') || document.body;
+    const div = document.createElement('div');
+    div.id = 'appErrorBanner';
+    div.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:9999;background:#fef2f2;border-bottom:2px solid #fecaca;padding:12px 20px;display:flex;align-items:center;justify-content:space-between;gap:16px;';
+    div.innerHTML = `
+      <div style="display:flex;align-items:center;gap:12px;">
+        <i class="fa-solid fa-circle-xmark" style="color:#dc2626;font-size:1.2rem;"></i>
+        <div>
+          <div style="font-weight:700;color:#991b1b;font-size:0.9rem;">${title}</div>
+          <div style="color:#b91c1c;font-size:0.8rem;">${msg}</div>
+        </div>
+      </div>
+      <button onclick="window.location.reload()" style="background:#dc2626;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:0.82rem;font-weight:600;">
+        <i class="fa-solid fa-rotate-right"></i> Recargar
+      </button>`;
+    const existing = document.getElementById('appErrorBanner');
+    if (existing) existing.remove();
+    document.body.prepend(div);
   },
 };

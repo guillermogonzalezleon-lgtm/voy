@@ -5,6 +5,42 @@
 let adminVerifications = [];
 let adminTransactions  = [];
 
+const PAGE_SIZE = 10;
+let usersPage = 1;
+let transPage = 1;
+
+/* ── Paginación helper ───────────────────── */
+function renderPagination(containerId, currentPage, totalItems, onPageChange) {
+  const totalPages = Math.ceil(totalItems / PAGE_SIZE);
+  if (totalPages <= 1) return '';
+  const pages = [];
+  for (let i = 1; i <= totalPages; i++) {
+    if (i === 1 || i === totalPages || Math.abs(i - currentPage) <= 1) {
+      pages.push(i);
+    } else if (pages[pages.length - 1] !== '...') {
+      pages.push('...');
+    }
+  }
+  return `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--gray-100);background:white;">
+      <span style="font-size:var(--text-xs);color:var(--gray-400);">
+        Mostrando ${Math.min((currentPage-1)*PAGE_SIZE+1, totalItems)}–${Math.min(currentPage*PAGE_SIZE, totalItems)} de ${totalItems}
+      </span>
+      <div style="display:flex;gap:var(--sp-1);">
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="${onPageChange}(${currentPage-1})" ${currentPage===1?'disabled':''}>
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        ${pages.map(p => p === '...'
+          ? `<span style="padding:var(--sp-1) var(--sp-2);color:var(--gray-400);">…</span>`
+          : `<button class="btn btn-${p===currentPage?'primary':'ghost'} btn-sm" onclick="${onPageChange}(${p})" style="min-width:32px;">${p}</button>`
+        ).join('')}
+        <button class="btn btn-ghost btn-sm btn-icon" onclick="${onPageChange}(${currentPage+1})" ${currentPage===totalPages?'disabled':''}>
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
+      </div>
+    </div>`;
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Verificar sesión — solo admins
   const session = VoyAuth.requireRole('admin');
@@ -30,8 +66,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     loadConfigView();
     loadAdminStats();
   } catch (e) {
-    VOY.showToast('Error cargando panel admin', 'error');
     console.error(e);
+    VOY.showAppError('Error cargando panel', e.message || 'No se pudo conectar con Airtable.');
   }
 });
 
@@ -277,6 +313,9 @@ function loadUsersTable(filter = 'all') {
   }));
   const users = [...clients, ...workers].filter(u => filter === 'all' || u.role === filter);
 
+  const start    = (usersPage - 1) * PAGE_SIZE;
+  const pageUsers = users.slice(start, start + PAGE_SIZE);
+
   el.innerHTML = `
     <thead>
       <tr>
@@ -285,7 +324,7 @@ function loadUsersTable(filter = 'all') {
       </tr>
     </thead>
     <tbody>
-      ${users.map(u => `
+      ${pageUsers.map(u => `
       <tr id="userRow_${u._recordId}">
         <td>
           <div style="display:flex;align-items:center;gap:var(--sp-3);">
@@ -313,9 +352,32 @@ function loadUsersTable(filter = 'all') {
         </td>
       </tr>`).join('')}
     </tbody>`;
+
+  // Agregar paginación después de la tabla (en el contenedor padre)
+  const paginationId = 'usersPagination';
+  let pEl = document.getElementById(paginationId);
+  if (!pEl) {
+    pEl = document.createElement('div');
+    pEl.id = paginationId;
+    el.parentNode.insertAdjacentElement('afterend', pEl);
+  }
+  pEl.innerHTML = renderPagination(paginationId, usersPage, users.length, 'setUsersPage');
+  // Guardar users para reusar en cambio de página
+  window._usersCache = users;
 }
 
-function filterUsers(val) { loadUsersTable(val); }
+function setUsersPage(page) {
+  const total = window._usersCache?.length || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  usersPage = Math.max(1, Math.min(page, totalPages));
+  const filter = document.querySelector('.sidebar-link.active')?.textContent?.includes('Clientes') ? 'cliente' : 'all';
+  loadUsersTable();
+}
+
+function filterUsers(val) {
+  usersPage = 1;
+  loadUsersTable(val);
+}
 
 async function toggleSuspend(recordId, table, name, currentStatus, btn) {
   const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
@@ -359,9 +421,9 @@ function loadTransTable() {
       return { id: b.id, date: b.date, client: c?.name || 'Cliente', worker: w?.name || 'Profesional', svc: b.category, gross: b.price, status: 'completed' };
     });
 
-  const all = [...adminTransactions, ...bookingTxs]
-    .sort((a,b) => (b.date || '').localeCompare(a.date || ''))
-    .slice(0, 20);
+  const allSorted = [...adminTransactions, ...bookingTxs]
+    .sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+  const all = allSorted.slice((transPage - 1) * PAGE_SIZE, transPage * PAGE_SIZE);
 
   const statusMap = {
     completed: { label: 'Completado', cls: 'badge-green' },
@@ -377,17 +439,35 @@ function loadTransTable() {
       ${all.map(t => {
         const st = statusMap[t.status] || statusMap.completed;
         return `<tr>
-          <td><code style="font-size:var(--text-xs);background:var(--gray-100);padding:2px 6px;border-radius:4px;">${t.id}</code></td>
+          <td style="font-family:monospace;font-size:var(--text-xs);">${t.id}</td>
           <td>${t.date}</td>
           <td>${t.client}</td>
           <td>${t.worker}</td>
           <td>${t.svc}</td>
-          <td style="font-weight:700;">${VOY.formatCLP(t.gross)}</td>
-          <td style="color:var(--color-success);font-weight:600;">+${VOY.formatCLP(Math.round(t.gross*0.15))}</td>
+          <td style="font-weight:600;">${VOY.formatCLP(t.gross)}</td>
+          <td style="color:var(--gray-400);">${VOY.formatCLP(Math.round(t.gross * 0.15))}</td>
           <td><span class="badge ${st.cls}">${st.label}</span></td>
         </tr>`;
       }).join('')}
     </tbody>`;
+
+  // Paginación de transacciones
+  const tPagId = 'transPagination';
+  let tPEl = document.getElementById(tPagId);
+  if (!tPEl) {
+    tPEl = document.createElement('div');
+    tPEl.id = tPagId;
+    el.parentNode.insertAdjacentElement('afterend', tPEl);
+  }
+  tPEl.innerHTML = renderPagination(tPagId, transPage, allSorted.length, 'setTransPage');
+  window._transTotalCount = allSorted.length;
+}
+
+function setTransPage(page) {
+  const total = window._transTotalCount || 0;
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+  transPage = Math.max(1, Math.min(page, totalPages));
+  loadTransTable();
 }
 
 /* ── Categories admin ───────────────────── */

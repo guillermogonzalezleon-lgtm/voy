@@ -34,8 +34,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     handleURLParams();
     setTodayDate();
   } catch (e) {
-    VOY.showToast('Error conectando con la base de datos', 'error');
     console.error(e);
+    VOY.showError('providersList', 'Error cargando datos. Verifica tu conexión.', 'location.reload');
+    VOY.showAppError('Error de conexión', e.message || 'No se pudo cargar la información.');
   }
 });
 
