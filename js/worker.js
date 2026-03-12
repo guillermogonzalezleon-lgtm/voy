@@ -50,9 +50,25 @@ function setEl(id, val) {
   if (el) el.textContent = val;
 }
 
+/* ── Greeting dinámico ──────────────────── */
+function updateDashboardGreeting() {
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Buenos días' : hour < 20 ? 'Buenas tardes' : 'Buenas noches';
+  const firstName = workerData?.name?.split(' ')[0] || 'Profesional';
+  const now = new Date();
+  const days   = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
+  const months = ['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+  const dateStr = `${days[now.getDay()]} ${now.getDate()} de ${months[now.getMonth()]}, ${now.getFullYear()}`;
+  const greetEl = document.getElementById('dashGreeting');
+  const dateEl  = document.getElementById('dashDate');
+  if (greetEl) greetEl.textContent = `${greeting}, ${firstName} 👋`;
+  if (dateEl)  dateEl.textContent  = dateStr;
+}
+
 /* ── Dashboard dinámico ─────────────────── */
 function loadWorkerDashboard() {
   if (!workerData) return;
+  updateDashboardGreeting();
 
   const completedBookings = VOY_DATA.bookings.filter(
     b => b.workerId === workerData.id && b.status === 'completed'
@@ -595,6 +611,17 @@ async function loadVerification() {
     console.error('Error cargando verificación:', e);
   }
 
+  // Actualizar badge de verificación en sidebar
+  const verifBadge = document.getElementById('verifBadge');
+  if (verifBadge) {
+    if (workerData?.verified || workerVerifRecord?.status === 'approved') {
+      verifBadge.style.display = 'none';
+    } else {
+      verifBadge.textContent = '!';
+      verifBadge.style.display = '';
+    }
+  }
+
   const uploadedDocs = workerVerifRecord?.docs || [];
   const docsCount    = uploadedDocs.length;
   const totalSteps   = 3;
@@ -812,7 +839,9 @@ function showView(name, el) {
   document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
   document.getElementById(`view-${name}`)?.classList.remove('hidden');
-  if (el) el.classList.add('active');
+  // Si no se pasó el link, buscar el que corresponde al nombre de la vista
+  const activeLink = el || document.querySelector(`.sidebar-link[onclick*="'${name}'"]`);
+  if (activeLink) activeLink.classList.add('active');
 
   // Los nombres en el HTML son: dashboard, solicitudes, agenda, ganancias, perfil, verificacion, resenas
   if (name === 'ganancias')    loadEarningsView();
