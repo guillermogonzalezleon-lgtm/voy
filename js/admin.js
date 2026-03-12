@@ -641,6 +641,106 @@ function saveToggleConfig(key, value) {
 }
 
 /* ── View switcher ──────────────────────── */
+/* ── Admin autocomplete search ─────────── */
+function onAdminSearchInput() {
+  const input = document.getElementById('adminSearch');
+  const query = input.value.toLowerCase().trim();
+  const box = document.getElementById('adminSuggestions');
+
+  if (!query) { box.classList.remove('open'); return; }
+
+  const suggestions = [];
+
+  // Buscar profesionales
+  VOY_DATA.workers.forEach(w => {
+    if (w.name.toLowerCase().includes(query) || w.email.toLowerCase().includes(query)) {
+      suggestions.push({ type: 'worker', label: w.name, sublabel: w.categoryLabel || w.category, icon: 'fa-hard-hat', id: w.id });
+    }
+  });
+
+  // Buscar clientes
+  VOY_DATA.clients.forEach(c => {
+    if (c.name.toLowerCase().includes(query) || c.email.toLowerCase().includes(query)) {
+      suggestions.push({ type: 'client', label: c.name, sublabel: c.email, icon: 'fa-user', id: c.id });
+    }
+  });
+
+  // Buscar secciones del admin
+  const sections = [
+    { id: 'overview', label: 'Resumen', icon: 'fa-chart-pie' },
+    { id: 'verificaciones', label: 'Verificaciones', icon: 'fa-shield-halved' },
+    { id: 'usuarios', label: 'Usuarios', icon: 'fa-users' },
+    { id: 'transacciones', label: 'Transacciones', icon: 'fa-receipt' },
+    { id: 'categorias', label: 'Categorías', icon: 'fa-tags' },
+  ];
+  sections.forEach(s => {
+    if (s.label.toLowerCase().includes(query)) {
+      suggestions.push({ type: 'section', label: s.label, icon: s.icon, id: s.id });
+    }
+  });
+
+  if (suggestions.length === 0) { box.classList.remove('open'); return; }
+
+  let html = '';
+  const secs = suggestions.filter(s => s.type === 'section');
+  const workers = suggestions.filter(s => s.type === 'worker').slice(0, 5);
+  const clients = suggestions.filter(s => s.type === 'client').slice(0, 5);
+
+  if (secs.length) {
+    html += '<div class="suggestion-section">Secciones</div>';
+    secs.forEach(s => {
+      html += `<div class="suggestion-item" onclick="selectAdminSuggestion('section','${s.id}')">
+        <i class="fa-solid ${s.icon}"></i><span>${adminHighlight(s.label, query)}</span></div>`;
+    });
+  }
+  if (workers.length) {
+    html += '<div class="suggestion-section">Profesionales</div>';
+    workers.forEach(s => {
+      html += `<div class="suggestion-item" onclick="selectAdminSuggestion('usuarios','${s.id}')">
+        <i class="fa-solid ${s.icon}"></i><div><span>${adminHighlight(s.label, query)}</span>
+        <div style="font-size:0.7rem;color:var(--gray-400);">${s.sublabel || ''}</div></div></div>`;
+    });
+  }
+  if (clients.length) {
+    html += '<div class="suggestion-section">Clientes</div>';
+    clients.forEach(s => {
+      html += `<div class="suggestion-item" onclick="selectAdminSuggestion('usuarios','${s.id}')">
+        <i class="fa-solid ${s.icon}"></i><div><span>${adminHighlight(s.label, query)}</span>
+        <div style="font-size:0.7rem;color:var(--gray-400);">${s.sublabel || ''}</div></div></div>`;
+    });
+  }
+
+  box.innerHTML = html;
+  box.classList.add('open');
+}
+
+function adminHighlight(text, query) {
+  const idx = text.toLowerCase().indexOf(query);
+  if (idx === -1) return text;
+  return text.slice(0, idx) + '<span class="match">' + text.slice(idx, idx + query.length) + '</span>' + text.slice(idx + query.length);
+}
+
+function selectAdminSuggestion(type, id) {
+  const input = document.getElementById('adminSearch');
+  const box = document.getElementById('adminSuggestions');
+  box.classList.remove('open');
+  input.value = '';
+
+  if (type === 'section') {
+    showView(id);
+  } else {
+    showView('usuarios');
+  }
+}
+
+document.addEventListener('click', (e) => {
+  const box = document.getElementById('adminSuggestions');
+  const input = document.getElementById('adminSearch');
+  if (box && !box.contains(e.target) && e.target !== input) {
+    box.classList.remove('open');
+  }
+});
+
 function showView(name, el) {
   document.querySelectorAll('[id^="view-"]').forEach(v => v.classList.add('hidden'));
   document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active'));
