@@ -505,7 +505,8 @@ function loadWorkerProfile() {
         <div class="card-body" style="text-align:center; padding:var(--sp-8);">
           <div style="position:relative; display:inline-block; margin-bottom:var(--sp-4);">
             <img src="${w.avatar}" class="avatar avatar-xl" style="width:96px;height:96px; margin:0 auto;" />
-            <button style="position:absolute;bottom:0;right:0;width:28px;height:28px;border-radius:50%;background:var(--color-primary);color:white;border:2px solid white;cursor:pointer;font-size:11px;" onclick="VOY.showToast('Cambiar foto próximamente', 'info')"><i class="fa-solid fa-camera"></i></button>
+            <input type="file" id="workerAvatarInput" accept="image/*" style="display:none;" onchange="handleWorkerAvatarUpload(this)" />
+            <button style="position:absolute;bottom:0;right:0;width:28px;height:28px;border-radius:50%;background:var(--color-primary);color:white;border:2px solid white;cursor:pointer;font-size:11px;" onclick="document.getElementById('workerAvatarInput').click()" title="Cambiar foto"><i class="fa-solid fa-camera"></i></button>
           </div>
           <h2 style="font-size:var(--text-xl);font-weight:700;margin-bottom:var(--sp-1);">${w.name}</h2>
           <p style="color:var(--gray-500);font-size:var(--text-sm);margin-bottom:var(--sp-4);">${w.categoryLabel} · ${w.city}</p>
@@ -666,6 +667,30 @@ async function loadVerification() {
         </div>
       </div>
     </div>`;
+}
+
+/* ── Cambiar foto de perfil ─────────────── */
+async function handleWorkerAvatarUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { VOY.showToast('La imagen no debe superar 5MB', 'error'); return; }
+
+  VOY.showToast('Subiendo foto...', 'info');
+  try {
+    const avatarFieldId = 'fldnWADccJ6kPZSwA';
+    const newUrl = await VoyDB.uploadAvatar('Workers', workerData._recordId, avatarFieldId, file);
+    if (newUrl) {
+      workerData.avatar = newUrl;
+      // Actualizar avatares en UI
+      document.querySelectorAll('.session-avatar').forEach(el => el.src = newUrl);
+      // Recargar perfil para mostrar nueva foto
+      loadWorkerProfile();
+      VOY.showToast('Foto actualizada correctamente', 'success');
+    }
+  } catch (e) {
+    console.error('Error subiendo avatar:', e);
+    VOY.showToast('Error al subir la foto. Intenta de nuevo.', 'error');
+  }
 }
 
 async function handleDocUpload(input, docKey) {

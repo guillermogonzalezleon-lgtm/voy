@@ -555,6 +555,41 @@ const VoyDB = (() => {
     });
   }
 
+  /* ── Upload de avatar ────────────────────── */
+  async function uploadAvatar(table, recordId, avatarFieldId, file) {
+    const url = `https://content.airtable.com/v0/${baseId()}/${recordId}/${avatarFieldId}/uploadAttachment`;
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+    formData.append('filename', file.name);
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token()}` },
+      body: formData,
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(`Avatar upload failed: ${err?.error?.message || res.statusText}`);
+    }
+    const data = await res.json();
+    const attachmentUrl = data.attachments?.[0]?.thumbnails?.large?.url || data.attachments?.[0]?.url;
+    // Guardar también en campo Avatar (URL) para referencia rápida
+    if (attachmentUrl) {
+      await request(`${table}/${recordId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ fields: { Avatar: attachmentUrl } }),
+      });
+    }
+    return attachmentUrl;
+  }
+
+  /* ── Suspender usuarios ──────────────────── */
+  async function updateUserStatus(table, recordId, status) {
+    return request(`${table}/${recordId}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ fields: { Status: status } }),
+    });
+  }
+
   /* ── Exports públicos ────────────────────── */
   return {
     // Auth
@@ -579,6 +614,10 @@ const VoyDB = (() => {
     getMessages, sendMessage,
     // Stats
     getStats,
+    // Avatar upload
+    uploadAvatar,
+    // User status
+    updateUserStatus,
     // Favoritos
     getFavorites, saveFavorites, toggleFavoriteLocal,
   };

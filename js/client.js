@@ -39,6 +39,31 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 });
 
+/* ── Cambiar foto de perfil (cliente) ────── */
+async function handleClientAvatarUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) { VOY.showToast('La imagen no debe superar 5MB', 'error'); return; }
+
+  VOY.showToast('Subiendo foto...', 'info');
+  try {
+    const avatarFieldId = 'fldz86ldJpFRy85yS';
+    const recordId = clientData?._recordId || clientSession?.recordId;
+    if (!recordId) throw new Error('No hay registro de cliente');
+    const newUrl = await VoyDB.uploadAvatar('Clients', recordId, avatarFieldId, file);
+    if (newUrl) {
+      if (clientData) clientData.avatar = newUrl;
+      document.querySelectorAll('.session-avatar').forEach(el => el.src = newUrl);
+      const img = document.getElementById('clientAvatarImg');
+      if (img) img.src = newUrl;
+      VOY.showToast('Foto actualizada correctamente', 'success');
+    }
+  } catch (e) {
+    console.error('Error subiendo avatar:', e);
+    VOY.showToast('Error al subir la foto. Intenta de nuevo.', 'error');
+  }
+}
+
 /* ── Logout ─────────────────────────────── */
 function logout() {
   VoyAuth.logout();
@@ -673,7 +698,11 @@ function loadClientProfile() {
     <div style="display:grid; grid-template-columns:300px 1fr; gap:var(--sp-6);">
       <div class="card">
         <div class="card-body" style="text-align:center; padding:var(--sp-8);">
-          <img src="${client.avatar}" class="avatar avatar-xl" style="width:96px;height:96px; margin:0 auto var(--sp-4);" />
+          <input type="file" id="clientAvatarInput" accept="image/*" style="display:none;" onchange="handleClientAvatarUpload(this)" />
+          <div style="position:relative;display:inline-block;margin-bottom:var(--sp-4);">
+            <img src="${client.avatar}" class="avatar avatar-xl" id="clientAvatarImg" style="width:96px;height:96px;" />
+            <button style="position:absolute;bottom:0;right:0;width:28px;height:28px;border-radius:50%;background:var(--color-primary);color:white;border:2px solid white;cursor:pointer;font-size:11px;" onclick="document.getElementById('clientAvatarInput').click()" title="Cambiar foto"><i class="fa-solid fa-camera"></i></button>
+          </div>
           <h2 style="font-size:var(--text-xl); font-weight:700; margin-bottom:var(--sp-1);">${client.name}</h2>
           <p style="color:var(--gray-500); font-size:var(--text-sm); margin-bottom:var(--sp-4);">
             <i class="fa-solid fa-location-dot" style="color:var(--color-primary);"></i> ${client.city}
@@ -682,9 +711,6 @@ function loadClientProfile() {
             <div><div style="font-size:var(--text-xl); font-weight:800;">${client.totalServices}</div><div style="font-size:var(--text-xs); color:var(--gray-400);">Servicios</div></div>
             <div><div style="font-size:var(--text-xl); font-weight:800;">${VOY_DATA.bookings.filter(b=>b.rating).length}</div><div style="font-size:var(--text-xs); color:var(--gray-400);">Reseñas</div></div>
           </div>
-          <button class="btn btn-outline btn-block" style="margin-top:var(--sp-4);">
-            <i class="fa-solid fa-pencil"></i> Editar perfil
-          </button>
         </div>
       </div>
       <div class="card">

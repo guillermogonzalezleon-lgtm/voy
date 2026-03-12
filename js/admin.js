@@ -263,12 +263,17 @@ function loadUsersTable(filter = 'all') {
   const el = document.getElementById('usersTable');
   if (!el) return;
 
-  const clients = VOY_DATA.clients.map(c => ({ ...c, role: 'cliente' }));
+  const clients = VOY_DATA.clients.map(c => ({
+    _recordId: c._recordId, id: c.id, name: c.name, avatar: c.avatar,
+    city: c.city, memberSince: c.memberSince, totalServices: c.totalServices,
+    role: 'cliente', category: '', verified: false, rating: c.rating || 0,
+    status: c.status || 'active',
+  }));
   const workers = VOY_DATA.workers.map(w => ({
-    _recordId: w._recordId,
-    id: w.id + 200, name: w.name, avatar: w.avatar, city: w.city,
-    memberSince: '2025-01', totalServices: w.completedJobs, role: 'profesional',
-    category: w.categoryLabel, verified: w.verified, rating: w.rating,
+    _recordId: w._recordId, id: w.id, name: w.name, avatar: w.avatar,
+    city: w.city, memberSince: '2025-01', totalServices: w.completedJobs,
+    role: 'profesional', category: w.categoryLabel, verified: w.verified, rating: w.rating,
+    status: w.status || 'active',
   }));
   const users = [...clients, ...workers].filter(u => filter === 'all' || u.role === filter);
 
@@ -281,7 +286,7 @@ function loadUsersTable(filter = 'all') {
     </thead>
     <tbody>
       ${users.map(u => `
-      <tr>
+      <tr id="userRow_${u._recordId}">
         <td>
           <div style="display:flex;align-items:center;gap:var(--sp-3);">
             <img src="${u.avatar}" class="avatar avatar-xs" />
@@ -295,14 +300,16 @@ function loadUsersTable(filter = 'all') {
         <td>${u.city}</td>
         <td>${u.memberSince}</td>
         <td>${u.totalServices}</td>
-        <td>
-          ${u.role === 'profesional'
-            ? `<span class="badge ${u.verified ? 'badge-green' : 'badge-yellow'}">${u.verified ? '✓ Verificado' : '! Pendiente'}</span>`
-            : '<span class="badge badge-green">Activo</span>'}
+        <td id="userStatus_${u._recordId}">
+          <span class="badge ${u.status === 'suspended' ? 'badge-red' : u.role === 'profesional' && u.verified ? 'badge-green' : 'badge-yellow'}">
+            ${u.status === 'suspended' ? '⛔ Suspendido' : u.role === 'profesional' ? (u.verified ? '✓ Verificado' : '! Pendiente') : '✓ Activo'}
+          </span>
         </td>
         <td>
-          <button class="btn btn-ghost btn-sm" onclick="VOY.showToast('Vista de usuario próximamente','info')">Ver</button>
-          <button class="btn btn-ghost btn-sm" style="color:var(--color-danger);" onclick="confirmSuspend('${u.name}')">Suspender</button>
+          <button class="btn btn-ghost btn-sm" style="color:${u.status === 'suspended' ? 'var(--color-success)' : 'var(--color-danger)'};"
+            onclick="toggleSuspend('${u._recordId}','${u.role === 'profesional' ? 'Workers' : 'Clients'}','${u.name}','${u.status}', this)">
+            ${u.status === 'suspended' ? 'Reactivar' : 'Suspender'}
+          </button>
         </td>
       </tr>`).join('')}
     </tbody>`;
@@ -310,9 +317,31 @@ function loadUsersTable(filter = 'all') {
 
 function filterUsers(val) { loadUsersTable(val); }
 
-function confirmSuspend(name) {
-  if (confirm(`¿Suspender a ${name}? Esta acción requiere confirmación.`)) {
-    VOY.showToast(`${name} suspendido`, 'warning');
+async function toggleSuspend(recordId, table, name, currentStatus, btn) {
+  const newStatus = currentStatus === 'suspended' ? 'active' : 'suspended';
+  const action    = newStatus === 'suspended' ? 'suspender' : 'reactivar';
+  if (!confirm(`¿Deseas ${action} a ${name}?`)) return;
+
+  if (btn) { btn.disabled = true; btn.textContent = '...'; }
+  try {
+    await VoyDB.updateUserStatus(table, recordId, newStatus);
+    VOY.showToast(`${name} ${newStatus === 'suspended' ? 'suspendido' : 'reactivado'}`, newStatus === 'suspended' ? 'warning' : 'success');
+    // Actualizar la UI sin recargar toda la tabla
+    const statusCell = document.getElementById(`userStatus_${recordId}`);
+    if (statusCell) {
+      statusCell.innerHTML = newStatus === 'suspended'
+        ? '<span class="badge badge-red">⛔ Suspendido</span>'
+        : '<span class="badge badge-green">✓ Activo</span>';
+    }
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = newStatus === 'suspended' ? 'Reactivar' : 'Suspender';
+      btn.style.color = newStatus === 'suspended' ? 'var(--color-success)' : 'var(--color-danger)';
+      btn.setAttribute('onclick', `toggleSuspend('${recordId}','${table}','${name}','${newStatus}',this)`);
+    }
+  } catch (e) {
+    VOY.showToast('Error al actualizar estado', 'error');
+    if (btn) { btn.disabled = false; btn.textContent = currentStatus === 'suspended' ? 'Reactivar' : 'Suspender'; }
   }
 }
 
@@ -365,23 +394,46 @@ function loadTransTable() {
 function loadCategoriesAdmin() {
   const el = document.getElementById('categoriesAdmin');
   if (!el) return;
+
+  // Cargar overrides de localStorage
+  const overrides = JSON.parse(localStorage.getItem('voy_cat_overrides') || '{}');
+  const cats = VOY_DATA.categories.map(cat => ({
+    ...cat,
+    label: overrides[cat.id]?.label || cat.label,
+    icon:  overrides[cat.id]?.icon  || cat.icon,
+  }));
+
   el.innerHTML = `
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-4);">
-      ${VOY_DATA.categories.map(cat => {
-        const count = VOY_DATA.workers.filter(w => w.category === cat.id).length;
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:var(--sp-4);" id="catGrid">
+      ${cats.map(cat => {
+        const count        = VOY_DATA.workers.filter(w => w.category === cat.id).length;
         const bookingCount = VOY_DATA.bookings.filter(b => b.category === cat.id).length;
         return `
-        <div class="card">
+        <div class="card" id="catCard_${cat.id}">
           <div class="card-body" style="display:flex;align-items:center;gap:var(--sp-4);">
             <div style="width:48px;height:48px;border-radius:var(--radius-lg);background:${cat.bg};color:${cat.color};display:flex;align-items:center;justify-content:center;font-size:var(--text-xl);flex-shrink:0;">
               <i class="fa-solid ${cat.icon}"></i>
             </div>
             <div style="flex:1;">
-              <div style="font-weight:700;">${cat.label}</div>
+              <div style="font-weight:700;" id="catLabel_${cat.id}">${cat.label}</div>
               <div style="font-size:var(--text-xs);color:var(--gray-400);">${count} profesionales · ${bookingCount} reservas</div>
             </div>
             <div style="display:flex;gap:var(--sp-2);">
-              <button class="btn btn-ghost btn-sm btn-icon" onclick="VOY.showToast('Editar categoría próximamente','info')"><i class="fa-solid fa-pencil"></i></button>
+              <button class="btn btn-ghost btn-sm btn-icon" onclick="toggleCatEdit('${cat.id}','${cat.label}','${cat.icon}')">
+                <i class="fa-solid fa-pencil"></i>
+              </button>
+            </div>
+          </div>
+          <div id="catEdit_${cat.id}" style="display:none;padding:var(--sp-3) var(--sp-4);border-top:1px solid var(--gray-100);background:var(--gray-50);">
+            <div style="display:flex;gap:var(--sp-2);margin-bottom:var(--sp-2);">
+              <input class="input" id="catInputLabel_${cat.id}" placeholder="Nombre" value="${cat.label}" style="flex:2;" />
+              <input class="input" id="catInputIcon_${cat.id}" placeholder="fa-xxx" value="${cat.icon}" style="flex:1;" />
+            </div>
+            <div style="display:flex;gap:var(--sp-2);">
+              <button class="btn btn-primary btn-sm" onclick="saveCatEdit('${cat.id}')">
+                <i class="fa-solid fa-check"></i> Guardar
+              </button>
+              <button class="btn btn-ghost btn-sm" onclick="toggleCatEdit('${cat.id}')">Cancelar</button>
             </div>
           </div>
         </div>`;
@@ -389,20 +441,78 @@ function loadCategoriesAdmin() {
     </div>`;
 }
 
+function toggleCatEdit(catId, label, icon) {
+  const panel = document.getElementById(`catEdit_${catId}`);
+  if (!panel) return;
+  const isVisible = panel.style.display !== 'none';
+  panel.style.display = isVisible ? 'none' : 'block';
+}
+
+function saveCatEdit(catId) {
+  const newLabel = document.getElementById(`catInputLabel_${catId}`)?.value.trim();
+  const newIcon  = document.getElementById(`catInputIcon_${catId}`)?.value.trim();
+  if (!newLabel) return;
+
+  // Guardar en localStorage
+  const overrides = JSON.parse(localStorage.getItem('voy_cat_overrides') || '{}');
+  overrides[catId] = { label: newLabel, icon: newIcon || 'fa-tag' };
+  localStorage.setItem('voy_cat_overrides', JSON.stringify(overrides));
+
+  // Actualizar la UI sin recargar
+  const labelEl = document.getElementById(`catLabel_${catId}`);
+  if (labelEl) labelEl.textContent = newLabel;
+  toggleCatEdit(catId);
+  VOY.showToast('Categoría actualizada', 'success');
+}
+
 /* ── Config ─────────────────────────────── */
+const CONFIG_KEY = 'voy_admin_config';
+
+function getAdminConfig() {
+  try { return JSON.parse(localStorage.getItem(CONFIG_KEY)) || {}; }
+  catch { return {}; }
+}
+
+function saveAdminConfig(cfg) {
+  localStorage.setItem(CONFIG_KEY, JSON.stringify(cfg));
+}
+
 function loadConfigView() {
   const el = document.getElementById('configView');
   if (!el) return;
+  const cfg = getAdminConfig();
+
+  const toggles = [
+    { key: 'clientRegistration',  label: 'Registro de clientes',      default: true  },
+    { key: 'workerRegistration',  label: 'Registro de profesionales',  default: true  },
+    { key: 'onlinePayments',      label: 'Pagos online',               default: true  },
+    { key: 'emailNotifications',  label: 'Notificaciones email',       default: true  },
+    { key: 'pushNotifications',   label: 'Notificaciones push',        default: false },
+    { key: 'maintenanceMode',     label: 'Modo mantenimiento',         default: false },
+  ];
+
   el.innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--sp-6);">
       <div class="card">
         <div class="card-header"><strong>Configuración general</strong></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:var(--sp-4);">
-          <div class="input-group"><label class="input-label">Nombre de la plataforma</label><input class="input" value="VOY" /></div>
-          <div class="input-group"><label class="input-label">Comisión estándar (%)</label><input class="input" type="number" value="15" /></div>
-          <div class="input-group"><label class="input-label">Comisión verificados (%)</label><input class="input" type="number" value="12" /></div>
-          <div class="input-group"><label class="input-label">Radio máximo de búsqueda (km)</label><input class="input" type="number" value="50" /></div>
-          <button class="btn btn-primary" onclick="VOY.showToast('Configuración guardada','success')">
+          <div class="input-group">
+            <label class="input-label">Nombre de la plataforma</label>
+            <input class="input" id="cfgName" value="${cfg.name || 'VOY'}" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Comisión estándar (%)</label>
+            <input class="input" id="cfgCommission" type="number" min="0" max="50" value="${cfg.commission || 15}" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Comisión verificados (%)</label>
+            <input class="input" id="cfgCommissionVerified" type="number" min="0" max="50" value="${cfg.commissionVerified || 12}" />
+          </div>
+          <div class="input-group">
+            <label class="input-label">Radio máximo de búsqueda (km)</label>
+            <input class="input" id="cfgRadius" type="number" min="1" max="200" value="${cfg.radius || 50}" />
+          </div>
+          <button class="btn btn-primary" onclick="saveConfig()">
             <i class="fa-solid fa-check"></i> Guardar cambios
           </button>
         </div>
@@ -410,24 +520,35 @@ function loadConfigView() {
       <div class="card">
         <div class="card-header"><strong>Estado de la plataforma</strong></div>
         <div class="card-body" style="display:flex;flex-direction:column;gap:var(--sp-4);">
-          ${[
-            { label: 'Registro de clientes',       on: true  },
-            { label: 'Registro de profesionales',  on: true  },
-            { label: 'Pagos online',               on: true  },
-            { label: 'Notificaciones email',        on: true  },
-            { label: 'Notificaciones push',         on: false },
-            { label: 'Modo mantenimiento',          on: false },
-          ].map(s => `
+          ${toggles.map(t => `
           <div style="display:flex;align-items:center;justify-content:space-between;">
-            <span style="font-size:var(--text-sm);color:var(--gray-700);">${s.label}</span>
+            <span style="font-size:var(--text-sm);color:var(--gray-700);">${t.label}</span>
             <label class="toggle">
-              <input type="checkbox" ${s.on ? 'checked' : ''} onchange="VOY.showToast('Configuración actualizada','info')" />
+              <input type="checkbox" id="cfg_${t.key}" ${(cfg[t.key] !== undefined ? cfg[t.key] : t.default) ? 'checked' : ''}
+                onchange="saveToggleConfig('${t.key}', this.checked)" />
               <span class="toggle-slider"></span>
             </label>
           </div>`).join('')}
         </div>
       </div>
     </div>`;
+}
+
+function saveConfig() {
+  const cfg = getAdminConfig();
+  cfg.name               = document.getElementById('cfgName')?.value || 'VOY';
+  cfg.commission         = Number(document.getElementById('cfgCommission')?.value) || 15;
+  cfg.commissionVerified = Number(document.getElementById('cfgCommissionVerified')?.value) || 12;
+  cfg.radius             = Number(document.getElementById('cfgRadius')?.value) || 50;
+  saveAdminConfig(cfg);
+  VOY.showToast('Configuración guardada', 'success');
+}
+
+function saveToggleConfig(key, value) {
+  const cfg = getAdminConfig();
+  cfg[key] = value;
+  saveAdminConfig(cfg);
+  VOY.showToast('Configuración actualizada', 'success');
 }
 
 /* ── View switcher ──────────────────────── */
