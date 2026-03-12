@@ -1,5 +1,6 @@
 .DS_Store
 js/config.js
+public/
 setup/ids.json
 .env
 .env.local
